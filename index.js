@@ -103,7 +103,7 @@ function exit(code, msg) {
  * @return {String}         The destination file name.
  */
 function getDestFileName(file, id3data) {
-  
+
   var genre = id3data.genre[0] || 'Unknown Genre';
   var artist = id3data.artist[0] || 'Unknown Artist';
   var album = id3data.album || 'Uknown Abum';
@@ -163,7 +163,7 @@ function copyFile(file, id3data, next) {
 function processFile(files, bar, file, next) {
 
   processed[file] = { status: 'success' };
-  
+
   var stream = fs.createReadStream(path.join(opts.source, file));
   var parser = mm(stream);
 
@@ -175,6 +175,7 @@ function processFile(files, bar, file, next) {
    * @param  {Object} id3data The id3 data.
    */
   function onFileMetadata(id3data) {
+    // Skip unknown tracks
     if (opts['skip-unknowns'] && !id3data.genre[0] && !id3data.artist[0] && !id3data.album) {
       bar.tick();
       processed[file] = {
@@ -182,7 +183,9 @@ function processFile(files, bar, file, next) {
         errorMsg: 'Skipped unknown track: missing genre, artist & album id3 data'
       }
       next();
-    } else {
+    }
+    // Attempt to copy the file
+    else {
       copyFile(file, id3data, function onCopyFile(err, destFileName) {
         bar.tick();
         processed[file].destination = destFileName;
@@ -206,7 +209,7 @@ function processFile(files, bar, file, next) {
     stream.destroy();
     if (err) {
       bar.tick();
-      processed[file] = { 
+      processed[file] = {
         status: 'error',
         errorMsg: 'Unable to process id3 metadata. ' + err
       };
@@ -231,7 +234,7 @@ function writeToLogs() {
  * Show a summary of the processed data.
  */
 function showSummary() {
-  
+
   var errors = Object.keys(processed).filter(function(key) {
     return processed[key].status === 'error';
   });
@@ -271,7 +274,7 @@ function showDryRunSummary() {
  */
 function onProcessedAllFiles(err) {
   if (opts.logfile) {
-    writeToLogs();     
+    writeToLogs();
   }
   showSummary();
   if (dryRun) {
@@ -289,8 +292,8 @@ function onFindFiles(err, files) {
   if (err) exit(1, err);
 
   var ProgressBar = require('progress');
-  var bar = new ProgressBar('Processing :current of :total files [:bar] :percent ETA: :etas', { 
-    total: files.length 
+  var bar = new ProgressBar('Processing :current of :total files [:bar] :percent ETA: :etas', {
+    total: files.length
   });
 
   async.each(files, processFile.bind(null, files, bar), onProcessedAllFiles);
