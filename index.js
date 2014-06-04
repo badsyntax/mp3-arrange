@@ -5,6 +5,7 @@ var path = require('path');
 var glob = require('glob');
 var async = require('async');
 var mm = require('musicmetadata');
+var ProgressBar = require('progress');
 
 // Define the script arguments.
 var opts = require("nomnom")
@@ -156,11 +157,10 @@ function copyFile(file, id3data, next) {
 /**
  * Process a file: read the id3 data and copy it to the new destination.
  * @param  {Arra}   files The array of all files to process.
- * @param  {ProgressBar}   bar   A ProgressBar instance.
  * @param  {String}   file  The source filename
  * @param  {Function} next  Done callback.
  */
-function processFile(files, bar, file, next) {
+function processFile(file, files, next) {
 
   processed[file] = { status: 'success' };
 
@@ -177,7 +177,6 @@ function processFile(files, bar, file, next) {
   function onFileMetadata(id3data) {
     // Skip unknown tracks
     if (opts['skip-unknowns'] && !id3data.genre[0] && !id3data.artist[0] && !id3data.album) {
-      bar.tick();
       processed[file] = {
         status: 'error',
         errorMsg: 'Skipped unknown track: missing genre, artist & album id3 data'
@@ -187,7 +186,6 @@ function processFile(files, bar, file, next) {
     // Attempt to copy the file
     else {
       copyFile(file, id3data, function onCopyFile(err, destFileName) {
-        bar.tick();
         processed[file].destination = destFileName;
         if (err) {
           processed[file] = {
@@ -208,7 +206,6 @@ function processFile(files, bar, file, next) {
   function onDone(err) {
     stream.destroy();
     if (err) {
-      bar.tick();
       processed[file] = {
         status: 'error',
         errorMsg: 'Unable to process id3 metadata. ' + err
@@ -265,7 +262,7 @@ function showLogs() {
  * Show a special dry-run summary.
  */
 function showDryRunSummary() {
-  showLogs();
+  // showLogs();
 }
 
 /**
@@ -291,12 +288,16 @@ function onProcessedAllFiles(err) {
 function onFindFiles(err, files) {
   if (err) exit(1, err);
 
-  var ProgressBar = require('progress');
   var bar = new ProgressBar('Processing :current of :total files [:bar] :percent ETA: :etas', {
     total: files.length
   });
 
-  async.each(files, processFile.bind(null, files, bar), onProcessedAllFiles);
+  async.each(files, function(file, next) {
+    processFile(file, files, function(err) {
+      bar.tick();
+      next(err);
+    });
+  }, onProcessedAllFiles);
 }
 
 // Begin!
