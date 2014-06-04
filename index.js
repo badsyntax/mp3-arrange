@@ -12,6 +12,7 @@ var opts = require("nomnom")
   abbr: 's',
   metavar: 'DIR',
   help: 'Source directory.',
+  required: true,
   callback: function(dir) {
     if (!fs.existsSync(dir)) {
       return 'Source directory does not exist.'
@@ -22,6 +23,7 @@ var opts = require("nomnom")
   abbr: 'd',
   metavar: 'DIR',
   help: 'Destination directory.',
+  required: true,
   callback: function(dir) {
     if (!fs.existsSync(dir)) {
       return 'Destination directory does not exist.'
@@ -49,6 +51,7 @@ var opts = require("nomnom")
 .option('format-filenames', {
   abbr: 'f',
   flag: true,
+  default: true,
   help: 'Re-name the files to match the song name.'
 })
 .option('overwrite', {
