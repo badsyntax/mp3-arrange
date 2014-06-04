@@ -85,12 +85,23 @@ if (dryRun) {
   console.log('');
 }
 
+/**
+ * Print an exit message and exit the process with the specified code.
+ * @param  {Number} code Exit code.
+ * @param  {String} msg  Message.
+ */
 function exit(code, msg) {
   code = parseInt(code, 10) || 1;
   if (msg) console.log(msg);
   process.exit(code);
 }
 
+/**
+ * Generate and return the destination file name.
+ * @param  {String} file    The source filename.
+ * @param  {Object} id3data The id3 data.
+ * @return {String}         The destination file name.
+ */
 function getDestFileName(file, id3data) {
   
   var genre = id3data.genre[0] || 'Unknown Genre';
@@ -116,6 +127,12 @@ function getDestFileName(file, id3data) {
   return destFile;
 }
 
+/**
+ * Copy the source file to the destination file.
+ * @param  {String}   file    The source filename.
+ * @param  {Object}   id3data The id3 data.
+ * @param  {Function} next    Done callback.
+ */
 function copyFile(file, id3data, next) {
 
   var sourceFile = path.resolve(opts.source, file);
@@ -136,6 +153,13 @@ function copyFile(file, id3data, next) {
   });
 }
 
+/**
+ * Process a file: read the id3 data and copy it to the new destination.
+ * @param  {Arra}   files The array of all files to process.
+ * @param  {ProgressBar}   bar   A ProgressBar instance.
+ * @param  {String}   file  The source filename
+ * @param  {Function} next  Done callback.
+ */
 function processFile(files, bar, file, next) {
 
   processed[file] = { status: 'success' };
@@ -146,6 +170,10 @@ function processFile(files, bar, file, next) {
   parser.on('metadata', onFileMetadata);
   parser.on('done', onDone);
 
+  /**
+   * Event handler: on successful read of id3 data.
+   * @param  {Object} id3data The id3 data.
+   */
   function onFileMetadata(id3data) {
     if (opts['skip-unknowns'] && !id3data.genre[0] && !id3data.artist[0] && !id3data.album) {
       bar.tick();
@@ -170,6 +198,10 @@ function processFile(files, bar, file, next) {
     }
   }
 
+  /**
+   * Event handler: called when the parser has completed.
+   * @param  {String} err Error string.
+   */
   function onDone(err) {
     stream.destroy();
     if (err) {
@@ -183,6 +215,9 @@ function processFile(files, bar, file, next) {
   }
 }
 
+/**
+ * Write processed data to a log file.
+ */
 function writeToLogs() {
   console.log('\nWriting to logfile:', opts.logfile);
   if (!dryRun) {
@@ -192,6 +227,9 @@ function writeToLogs() {
   }
 }
 
+/**
+ * Show a summary of the processed data.
+ */
 function showSummary() {
   
   var errors = Object.keys(processed).filter(function(key) {
@@ -212,15 +250,25 @@ function showSummary() {
   }
 }
 
+/**
+ * Print logs to stdout.
+ */
 function showLogs() {
   console.log('')
   console.log(JSON.stringify(processed, null, 2));
 }
 
+/**
+ * Show a special dry-run summary.
+ */
 function showDryRunSummary() {
   showLogs();
 }
 
+/**
+ * Event handler: called when all files have been processed.
+ * @param  {String} err The error string.
+ */
 function onProcessedAllFiles(err) {
   if (opts.logfile) {
     writeToLogs();     
@@ -231,6 +279,12 @@ function onProcessedAllFiles(err) {
   }
 }
 
+/**
+ * Event handler: called when all valid files have been found.
+ * @param  {String} err   The error handler.
+ * @param  {Array} files The array of files.
+ * @return {[type]}       [description]
+ */
 function onFindFiles(err, files) {
   if (err) exit(1, err);
 
@@ -244,3 +298,9 @@ function onFindFiles(err, files) {
 
 // Begin!
 glob("**/*.mp3", { cwd: path.resolve(opts.source) }, onFindFiles);
+
+// Handle interruptions
+process.on('SIGINT', function() {
+  writeToLogs();
+  process.exit();
+});
