@@ -41,13 +41,15 @@ function createMp3(opts, done) {
       ], next);
     },
     function(code, stderr, next) {
-      run('id3v2', [
-        '-g', opts.genre,
-        '-a', opts.artist,
-        '-A', opts.album,
-        '-t', opts.song,
-        opts.filename
-      ], next);
+
+      var args = [];
+      if (opts.genre) args.push('-g', opts.genre);
+      if (opts.artist) args.push('-a', opts.artist);
+      if (opts.album) args.push('-A', opts.album);
+      if (opts.title) args.push('-t', opts.title);
+      args.push(opts.filename);
+
+      run('id3v2', args, next);
     }
   ], function(err, code, stdout) {
     if (err || code !== 0) done(err || stdout);

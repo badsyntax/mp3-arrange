@@ -8,6 +8,7 @@ var glob = require('glob');
 var async = require('async');
 var mm = require('musicmetadata');
 var ProgressBar = require('progress');
+var bytes = require('bytes');
 
 // Define the script arguments.
 var opts = require('nomnom')
@@ -92,14 +93,6 @@ function log() {
   }
 }
 
-if (dryRun) {
-  log('');
-  log('*********************************');
-  log('**           DRY RUN           **');
-  log('*********************************');
-  log('');
-}
-
 /**
  * Print an exit message and exit the process with the specified code.
  * @param  {Number} code Exit code.
@@ -127,13 +120,13 @@ function getDestFileName(file, id3data) {
 
   // Default track name.
   var destTrackName = path.basename(file);
-  var hasTrackData = (id3data.title && id3data.track && id3data.track.no && id3data.track.of);
+  var hasTrackData = (id3data.track && id3data.track.no);
 
-  if (opts['format-filenames'] && hasTrackData) {
+  if (opts['format-filenames'] && id3data.title) {
     // add leading zeros
-    var trackNo = ('00' + parseInt(id3data.track.no)).slice(-2);
+    var trackNo = hasTrackData ? (('00' + parseInt(id3data.track.no)).slice(-2) + ' ') : '';
     // eg: 04 My Track.mp3
-    destTrackName = util.format('%s %s.mp3', trackNo, id3data.title);
+    destTrackName = util.format('%s%s.mp3', trackNo, id3data.title);
   }
 
   // Full path to file.
@@ -233,7 +226,6 @@ function processFile(file, files, next) {
  * Write processed data to a log file.
  */
 function writeToLogs() {
-  log('\nWriting to logfile:', opts.logfile);
   if (!dryRun) {
     fs.writeFile(opts.logfile, JSON.stringify(processed, null, 4), function(err) {
       if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
@@ -253,30 +245,16 @@ function showSummary() {
     return processed[key].status === 'success';
   });
 
-  log('Processed:', successful.length);
+  log('Copied:', successful.length);
   log('Skipped:', errors.length);
 
   if (errors.length) {
-    log('\nThe following files were skipped due to errors:\n');
-    errors.forEach(function(key) {
-      log(util.format('* %s (%s)', key, processed[key].errorMsg));
-    });
+    log(
+      '!! There were %d errors while copying the files, please see %s for more information.',
+      errors.length,
+      opts.logfile
+    );
   }
-}
-
-/**
- * Print logs to stdout.
- */
-function showLogs() {
-  log('');
-  log(JSON.stringify(processed, null, 2));
-}
-
-/**
- * Show a special dry-run summary.
- */
-function showDryRunSummary() {
-  // showLogs();
 }
 
 /**
@@ -288,9 +266,6 @@ function onProcessedAllFiles(err) {
     writeToLogs();
   }
   showSummary();
-  if (dryRun) {
-    showDryRunSummary();
-  }
 }
 
 /**
@@ -300,19 +275,50 @@ function onProcessedAllFiles(err) {
  * @return {[type]}       [description]
  */
 function onFindFiles(err, files) {
+
   if (err) exit(1, err);
 
-  var bar = new ProgressBar('Processing :current of :total files [:bar] :percent ETA: :etas', {
-    total: files.length
+  var sizesBar = new ProgressBar('Reading file sizes [:bar] :percent', {
+    total: files.length,
+    width: 60
   });
 
-  async.each(files, function(file, next) {
+  var processingBar = new ProgressBar('Processing :current of :total files [:bar] :percent ETA: :etas', {
+    total: files.length,
+    width: 60
+  });
+
+  var totalSize = 0;
+
+  function getFileSize(file, next) {
+    fs.stat(path.join(opts.source, file), function(err, stat) {
+      sizesBar.tick();
+      if (err) return next(err);
+      totalSize += stat.size;
+      next();
+    });
+  }
+
+  function processFileWithProgress(file, next) {
     processFile(file, files, function(err) {
-      bar.tick();
+      processingBar.tick();
       next(err);
     });
-  }, onProcessedAllFiles);
+  }
+
+  async.waterfall([
+    function(next) {
+      async.each(files, getFileSize, next);
+    },
+    function(next) {
+      log('File size to copy:', bytes(totalSize));
+      log('Writing to logfile:', opts.logfile);
+      async.each(files, processFileWithProgress, next);
+    }
+  ], onProcessedAllFiles)
 }
+
+console.log('Calculating changes...');
 
 // Begin!
 glob('**/*.mp3', { cwd: opts.source }, onFindFiles);
