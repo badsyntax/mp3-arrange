@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": "true",
   "scripts": {
-    "test": "jasmine-node spec/ --verbose",
+    "test": "jasmine-node spec/ --verbose --captureExceptions",
     "setup": "bin/setup"
   },
   "author": "Richard Willis <willis.rh@gmail.com>",

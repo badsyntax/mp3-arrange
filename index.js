@@ -1,3 +1,5 @@
+'use strict';
+
 // Load deps.
 var util = require('util');
 var fs = require('fs-extra');
@@ -8,7 +10,7 @@ var mm = require('musicmetadata');
 var ProgressBar = require('progress');
 
 // Define the script arguments.
-var opts = require("nomnom")
+var opts = require('nomnom')
 .option('source', {
   abbr: 's',
   metavar: 'DIR',
@@ -16,7 +18,7 @@ var opts = require("nomnom")
   required: true,
   callback: function(dir) {
     if (!fs.existsSync(dir)) {
-      return 'Source directory does not exist.'
+      return 'Source directory does not exist.';
     }
   }
 })
@@ -27,7 +29,7 @@ var opts = require("nomnom")
   required: true,
   callback: function(dir) {
     if (!fs.existsSync(dir)) {
-      return 'Destination directory does not exist.'
+      return 'Destination directory does not exist.';
     }
   }
 })
@@ -59,7 +61,13 @@ var opts = require("nomnom")
   abbr: 'o',
   flag: true,
   default: false,
-  help: 'Overwrite the destination file if it exists'
+  help: 'Overwrite the destination file if it exists.'
+})
+.option('quiet', {
+  abbr: 'q',
+  flag: true,
+  default: false,
+  help: 'Only output errors.'
 })
 .option('version', {
   abbr: 'v',
@@ -78,12 +86,18 @@ opts = opts.parse();
 var dryRun = opts['dry-run'];
 var processed = {};
 
+function log() {
+  if (!opts.quiet) {
+    console.log.apply(console, arguments);
+  }
+}
+
 if (dryRun) {
-  console.log('');
-  console.log('*********************************');
-  console.log('**           DRY RUN           **');
-  console.log('*********************************');
-  console.log('');
+  log('');
+  log('*********************************');
+  log('**           DRY RUN           **');
+  log('*********************************');
+  log('');
 }
 
 /**
@@ -93,7 +107,7 @@ if (dryRun) {
  */
 function exit(code, msg) {
   code = parseInt(code, 10) || 1;
-  if (msg) console.log(msg);
+  if (msg) log(msg);
   process.exit(code);
 }
 
@@ -123,7 +137,7 @@ function getDestFileName(file, id3data) {
   }
 
   // Full path to file.
-  var destFile = path.resolve(destDir, destTrackName);
+  var destFile = path.join(destDir, destTrackName);
 
   return destFile;
 }
@@ -167,9 +181,6 @@ function processFile(file, files, next) {
   var stream = fs.createReadStream(path.join(opts.source, file));
   var parser = mm(stream);
 
-  parser.on('metadata', onFileMetadata);
-  parser.on('done', onDone);
-
   /**
    * Event handler: on successful read of id3 data.
    * @param  {Object} id3data The id3 data.
@@ -180,7 +191,7 @@ function processFile(file, files, next) {
       processed[file] = {
         status: 'error',
         errorMsg: 'Skipped unknown track: missing genre, artist & album id3 data'
-      }
+      };
       next();
     }
     // Attempt to copy the file
@@ -192,7 +203,7 @@ function processFile(file, files, next) {
             status: 'error',
             errorMsg: 'Error copying file. ' + err,
             destination: destFileName
-          }
+          };
         }
         next();
       });
@@ -213,13 +224,16 @@ function processFile(file, files, next) {
       next();
     }
   }
+
+  parser.on('metadata', onFileMetadata);
+  parser.on('done', onDone);
 }
 
 /**
  * Write processed data to a log file.
  */
 function writeToLogs() {
-  console.log('\nWriting to logfile:', opts.logfile);
+  log('\nWriting to logfile:', opts.logfile);
   if (!dryRun) {
     fs.writeFile(opts.logfile, JSON.stringify(processed, null, 4), function(err) {
       if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
@@ -239,13 +253,13 @@ function showSummary() {
     return processed[key].status === 'success';
   });
 
-  console.log('Processed: ', successful.length);
-  console.log('Skipped: ', errors.length);
+  log('Processed:', successful.length);
+  log('Skipped:', errors.length);
 
   if (errors.length) {
-    console.log('\nThe following files were skipped due to errors:\n');
+    log('\nThe following files were skipped due to errors:\n');
     errors.forEach(function(key) {
-      console.log(util.format('* %s (%s)', key, processed[key].errorMsg));
+      log(util.format('* %s (%s)', key, processed[key].errorMsg));
     });
   }
 }
@@ -254,8 +268,8 @@ function showSummary() {
  * Print logs to stdout.
  */
 function showLogs() {
-  console.log('')
-  console.log(JSON.stringify(processed, null, 2));
+  log('');
+  log(JSON.stringify(processed, null, 2));
 }
 
 /**
@@ -301,10 +315,11 @@ function onFindFiles(err, files) {
 }
 
 // Begin!
-glob("**/*.mp3", { cwd: path.resolve(opts.source) }, onFindFiles);
+glob('**/*.mp3', { cwd: opts.source }, onFindFiles);
 
 // Handle interruptions
 process.on('SIGINT', function() {
   writeToLogs();
   process.exit();
 });
+

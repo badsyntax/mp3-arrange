@@ -166,3 +166,71 @@ describe('Copy', function() {
     });
   });
 });
+
+describe('Overwrite', function() {
+
+  var song = 'song1.mp3';
+
+  afterEach(function() {
+    fs.removeSync(path.join(DEST_PATH, 'Alternative'));
+    fs.removeSync(path.join(SOURCE_PATH, song));
+  });
+
+  function isChanged(overwrite, done) {
+    var changed = false;
+    var args = [
+      '-s', SOURCE_PATH,
+      '-d', DEST_PATH,
+    ];
+    if (overwrite) args.push('-o');
+    async.waterfall([
+      createMp3.bind(null, {
+        filename: path.join(SOURCE_PATH, song),
+        genre: 20,
+        artist: 'Test Artist',
+        album: 'Test Album'
+      }),
+      function (next) {
+
+        var songDir = path.join(DEST_PATH, 'Alternative', 'Test Artist', 'Test Album');
+        var songPath = path.join(songDir, song);
+
+        fs.mkdirpSync(songDir);
+
+        createMp3({
+          filename: songPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album'
+        }, function(err) {
+          if (err) return next(err);
+          fs.watch(songPath, {
+            persistent: false
+          }, function(event, filename) {
+            changed = true;
+          });
+          next();
+        });
+      },
+      run.bind(null, 'bin/id3-arrange', args)
+    ], function(err) {
+      done(err, changed);
+    });
+  }
+
+  it('Should NOT overwrite the file if the overwrite option is not set', function(done) {
+    isChanged(false, function(err, changed) {
+      if (err) return done(err);
+      expect(changed).toBe(false);
+      done();
+    });
+  });
+
+  it('Should overwrite the file if the overwrite option is set', function(done) {
+    isChanged(true, function(err, changed) {
+      if (err) return done(err);
+      expect(changed).toBe(true);
+      done();
+    });
+  });
+});
