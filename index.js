@@ -2,13 +2,14 @@
 
 // Load deps.
 var util = require('util');
-var fs = require('fs-extra');
+var fsExtra = require('fs-extra');
+var fs = require('graceful-fs');
 var path = require('path');
 var glob = require('glob');
 var async = require('async');
-var mm = require('musicmetadata');
 var ProgressBar = require('progress');
 var bytes = require('bytes');
+var Mp3File = require('./lib/Mp3File');
 
 // Define the script arguments.
 var opts = require('nomnom')
@@ -80,10 +81,10 @@ var opts = require('nomnom')
   }
 });
 
-// Parse the arguments.
+// Parse the arguments
 opts = opts.parse();
 
-// Define globals.
+// Define globals
 var dryRun = opts['dry-run'];
 var processed = {};
 
@@ -93,150 +94,27 @@ function log() {
   }
 }
 
-/**
- * Print an exit message and exit the process with the specified code.
- * @param  {Number} code Exit code.
- * @param  {String} msg  Message.
- */
 function exit(code, msg) {
   code = parseInt(code, 10) || 1;
   if (msg) log(msg);
   process.exit(code);
 }
 
-/**
- * Generate and return the destination file name.
- * @param  {String} file    The source filename.
- * @param  {Object} id3data The id3 data.
- * @return {String}         The destination file name.
- */
-function getDestFileName(file, id3data) {
-
-  var genre = id3data.genre[0] || 'Unknown Genre';
-  var artist = id3data.artist[0] || 'Unknown Artist';
-  var album = id3data.album || 'Uknown Abum';
-
-  var destDir = path.resolve(opts.destination, genre, artist, album);
-
-  // Default track name.
-  var destTrackName = path.basename(file);
-  var hasTrackData = (id3data.track && id3data.track.no);
-
-  if (opts['format-filenames'] && id3data.title) {
-    // add leading zeros
-    var trackNo = hasTrackData ? (('00' + parseInt(id3data.track.no)).slice(-2) + ' ') : '';
-    // eg: 04 My Track.mp3
-    destTrackName = util.format('%s%s.mp3', trackNo, id3data.title);
-  }
-
-  // Full path to file.
-  var destFile = path.join(destDir, destTrackName);
-
-  return destFile;
+function logProcessed(file, status, msg) {
+  processed[file.destFile] = {
+    status: status,
+    errorMsg: msg
+  };
 }
 
-/**
- * Copy the source file to the destination file.
- * @param  {String}   file    The source filename.
- * @param  {Object}   id3data The id3 data.
- * @param  {Function} next    Done callback.
- */
-function copyFile(file, id3data, next) {
-
-  var sourceFile = path.resolve(opts.source, file);
-  var destFile = getDestFileName(file, id3data);
-
-  fs.exists(destFile, function (exists) {
-    if (!exists || opts.overwrite) {
-      if (!dryRun) {
-        fs.copy(sourceFile, destFile, function onCopy(err) {
-          next(err, destFile);
-        });
-      } else {
-        next(null, destFile);
-      }
-    } else {
-      next('File already exists', destFile);
-    }
+function writelogs() {
+  if (dryRun) return;
+  fs.writeFile(opts.logfile, JSON.stringify(processed, null, 4), function(err) {
+    if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
   });
 }
 
-/**
- * Process a file: read the id3 data and copy it to the new destination.
- * @param  {Arra}   files The array of all files to process.
- * @param  {String}   file  The source filename
- * @param  {Function} next  Done callback.
- */
-function processFile(file, files, next) {
-
-  processed[file] = { status: 'success' };
-
-  var stream = fs.createReadStream(path.join(opts.source, file));
-  var parser = mm(stream);
-
-  /**
-   * Event handler: on successful read of id3 data.
-   * @param  {Object} id3data The id3 data.
-   */
-  function onFileMetadata(id3data) {
-    // Skip unknown tracks
-    if (opts['skip-unknowns'] && !id3data.genre[0] && !id3data.artist[0] && !id3data.album) {
-      processed[file] = {
-        status: 'error',
-        errorMsg: 'Skipped unknown track: missing genre, artist & album id3 data'
-      };
-      next();
-    }
-    // Attempt to copy the file
-    else {
-      copyFile(file, id3data, function onCopyFile(err, destFileName) {
-        processed[file].destination = destFileName;
-        if (err) {
-          processed[file] = {
-            status: 'error',
-            errorMsg: 'Error copying file. ' + err,
-            destination: destFileName
-          };
-        }
-        next();
-      });
-    }
-  }
-
-  /**
-   * Event handler: called when the parser has completed.
-   * @param  {String} err Error string.
-   */
-  function onDone(err) {
-    stream.destroy();
-    if (err) {
-      processed[file] = {
-        status: 'error',
-        errorMsg: 'Unable to process id3 metadata. ' + err
-      };
-      next();
-    }
-  }
-
-  parser.on('metadata', onFileMetadata);
-  parser.on('done', onDone);
-}
-
-/**
- * Write processed data to a log file.
- */
-function writeToLogs() {
-  if (!dryRun) {
-    fs.writeFile(opts.logfile, JSON.stringify(processed, null, 4), function(err) {
-      if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
-    });
-  }
-}
-
-/**
- * Show a summary of the processed data.
- */
-function showSummary() {
+function summary() {
 
   var errors = Object.keys(processed).filter(function(key) {
     return processed[key].status === 'error';
@@ -257,75 +135,69 @@ function showSummary() {
   }
 }
 
-/**
- * Event handler: called when all files have been processed.
- * @param  {String} err The error string.
- */
-function onProcessedAllFiles(err) {
-  if (opts.logfile) {
-    writeToLogs();
-  }
-  showSummary();
-}
-
-/**
- * Event handler: called when all valid files have been found.
- * @param  {String} err   The error handler.
- * @param  {Array} files The array of files.
- * @return {[type]}       [description]
- */
-function onFindFiles(err, files) {
+// Begin
+log('Finding files...');
+glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
 
   if (err) exit(1, err);
 
-  var sizesBar = new ProgressBar('Reading file sizes [:bar] :percent', {
-    total: files.length,
-    width: 60
-  });
-
-  var processingBar = new ProgressBar('Processing :current of :total files [:bar] :percent ETA: :etas', {
-    total: files.length,
-    width: 60
-  });
-
   var totalSize = 0;
+  var barMsg = '%s :current of :total [:bar] :percent ETA: :etas';
 
-  function getFileSize(file, next) {
-    fs.stat(path.join(opts.source, file), function(err, stat) {
-      sizesBar.tick();
-      if (err) return next(err);
-      totalSize += stat.size;
+  var readingBar = new ProgressBar(util.format(barMsg, 'Reading'), {
+    total: found.length,
+    width: 60
+  });
+
+  var processingBar = new ProgressBar(util.format(barMsg, 'Processing'), {
+    total: found.length,
+    width: 60
+  });
+
+  var files = found.map(function(file) {
+    return new Mp3File(
+      path.join(opts.source, file),
+      opts
+    );
+  });
+
+  function readFile(file, next) {
+    file.read(function(err) {
+      readingBar.tick();
+      if (err) logProcessed(file, 'error', err);
+      else logProcessed(file, 'success');
+      if (file.fileSize) totalSize += file.fileSize;
       next();
     });
   }
 
-  function processFileWithProgress(file, next) {
-    processFile(file, files, function(err) {
+  function processFile(file, next) {
+    file.copy(opts.destination, function(err) {
+      if (err) logProcessed(file, 'error', err);
+      else logProcessed(file, 'success');
       processingBar.tick();
-      next(err);
+      next();
     });
   }
 
   async.waterfall([
-    function(next) {
-      async.each(files, getFileSize, next);
+    function readFiles(next) {
+      async.each(files, readFile, next);
     },
-    function(next) {
-      log('File size to copy:', bytes(totalSize));
-      log('Writing to logfile:', opts.logfile);
-      async.each(files, processFileWithProgress, next);
+    function processFiles(next) {
+      log('Total size: %s. Writing to logfile %s', bytes(totalSize), opts.logfile);
+      async.eachSeries(files, processFile, next);
     }
-  ], onProcessedAllFiles)
-}
-
-console.log('Calculating changes...');
-
-// Begin!
-glob('**/*.mp3', { cwd: opts.source }, onFindFiles);
+  ], function onProcessedAllFiles(err) {
+    if (opts.logfile) {
+      writelogs();
+    }
+    summary();
+  });
+});
 
 // Handle interruptions
 process.on('SIGINT', function() {
-  writeToLogs();
+  summary();
   process.exit();
 });
-

@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": "true",
   "scripts": {
-    "test": "jasmine-node spec/ --verbose --captureExceptions",
+    "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall",
     "setup": "bin/setup"
   },
   "author": "Richard Willis <willis.rh@gmail.com>",
@@ -19,6 +19,7 @@
     "bytes": "^1.0.0",
     "fs-extra": "^0.9.1",
     "glob": "^4.0.2",
+    "graceful-fs": "^3.0.1",
     "musicmetadata": "^0.3.11",
     "nomnom": "^1.7.0",
     "progress": "^1.1.5"

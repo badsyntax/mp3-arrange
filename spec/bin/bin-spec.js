@@ -3,59 +3,16 @@
  */
 'use strict';
 
-var spawn = require('child_process').spawn;
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
+var helpers = require('../helpers');
 
 var SOURCE_PATH = 'spec/fixtures/source';
 var DEST_PATH = 'spec/fixtures/dest';
 
-function run(cmd, args, done) {
-
-  var proc = spawn(cmd, args || []);
-  var stdout = [];
-  var stderr = [];
-
-  proc.stdout.setEncoding('utf8');
-  proc.stderr.setEncoding('utf8');
-
-  proc.stdout.on('data', function (data) {
-    stdout.push(data);
-  });
-  proc.stderr.on('data', function (data) {
-    stderr.push(data);
-  });
-  proc.on('close', function (code) {
-    done(stderr.join(), code, stdout.join());
-  });
-}
-
-function createMp3(opts, done) {
-  async.waterfall([
-    function(next) {
-      run('sox', [
-        '-n', '-r', '44100',
-        '-c', '2', opts.filename,
-        'trim', '0.0', '0.0'
-      ], next);
-    },
-    function(code, stderr, next) {
-
-      var args = [];
-      if (opts.genre) args.push('-g', opts.genre);
-      if (opts.artist) args.push('-a', opts.artist);
-      if (opts.album) args.push('-A', opts.album);
-      if (opts.title) args.push('-t', opts.title);
-      args.push(opts.filename);
-
-      run('id3v2', args, next);
-    }
-  ], function(err, code, stdout) {
-    if (err || code !== 0) done(err || stdout);
-    else done();
-  });
-}
+var run = helpers.run;
+var createMp3 = helpers.createMp3;
 
 describe('Options', function() {
   it('Should exit with code 1 if any of the required options are not supplied', function(done) {
@@ -82,16 +39,17 @@ describe('Options', function() {
 describe('Dry run', function() {
 
   var song = 'song.mp3';
+  var songPath = path.join(SOURCE_PATH, song);
 
   afterEach(function() {
-    fs.removeSync(path.join(SOURCE_PATH, song));
+    fs.removeSync(songPath);
   });
 
   it('Should NOT copy the file when the dry run option is set', function(done) {
 
     async.waterfall([
       createMp3.bind(null, {
-        filename: path.join(SOURCE_PATH, song),
+        filename: songPath,
         genre: 20,
         artist: 'Test Artist',
         album: 'Test Album'

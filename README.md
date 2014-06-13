@@ -31,6 +31,10 @@ Options:
 id3-arrange -s /home/richard/Music -d /media/hdd1/music`
 ```
 
+### Usage notes
+
+* Ensure you have write permissions on the destination directory.
+
 ## Development
 
 Create a global bin link:
