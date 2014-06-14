@@ -1,17 +1,15 @@
 'use strict';
 
-// Load deps.
 var util = require('util');
 var fsExtra = require('fs-extra');
 var fs = require('graceful-fs');
 var path = require('path');
 var glob = require('glob');
 var async = require('async');
-var ProgressBar = require('progress');
+var pace = require('pace')
 var bytes = require('bytes');
 var Mp3File = require('./lib/Mp3File');
 
-// Define the script arguments.
 var opts = require('nomnom')
 .option('source', {
   abbr: 's',
@@ -95,37 +93,35 @@ var dryRun = opts['dry-run'];
 var logs = [];
 
 function echo() {
-  if (!opts.quiet) {
+  if (!opts.quiet)
     console.log.apply(console, arguments);
   }
 }
 
 function exit(code, msg) {
-  code = parseInt(code, 10) || 1;
   if (msg) echo(msg);
   process.exit(code);
 }
 
 function log(file, status, msg) {
-  if (!file.logs) file.logs = [];
-  file.logs.push({
+  file.log = {
     status: status,
     msg: msg || ''
-  });
+  };
 }
 
 function genlogs(files) {
   logs = files.map(function(file) {
     return {
+      status: file.log.status,
+      msg: file.log.msg,
       srcFile: file.filePath,
-      destFile: file.destFile,
-      logs: file.logs,
-    }
+      destFile: file.destFile
+    };
   })
 }
 
 function writelogs() {
-  if (dryRun) return;
   fs.writeFile(opts.logfile, JSON.stringify(logs, null, 2), function(err) {
     if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
   });
@@ -133,14 +129,14 @@ function writelogs() {
 
 function summary() {
 
-  var errors = logs.filter(function(log) {
+  var errors = logs.filter(function(log){
     return (log.status === 'error');
   });
-  var successful = logs.filter(function(log) {
+  var success = logs.filter(function(log){
     return (log.status === 'success');
   });
 
-  echo('Copied:', successful.length);
+  echo('Copied:', success.length);
   echo('Skipped:', errors.length);
 
   if (errors.length) {
@@ -153,7 +149,7 @@ function summary() {
 }
 
 // Begin
-echo('Finding files...');
+echo('Finding files...\n');
 glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
 
   if (err) exit(1, err);
@@ -161,14 +157,10 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
   var totalSize = 0;
   var barMsg = '%s :current of :total [:bar] :percent ETA: :etas';
 
-  var readingBar = new ProgressBar(util.format(barMsg, 'Reading'), {
+  var progress = pace({
     total: found.length,
-    width: 60
-  });
-
-  var processingBar = new ProgressBar(util.format(barMsg, 'Processing'), {
-    total: found.length,
-    width: 60
+    showBurden: false,
+    maxBurden: 0.5
   });
 
   var files = found.map(function(file) {
@@ -178,32 +170,30 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
     );
   });
 
-  function readFile(file, next) {
-    file.read(function(err) {
-      readingBar.tick();
-      if (err) log(file, 'error', err);
-      if (file.fileSize) totalSize += file.fileSize;
-      next();
-    });
-  }
-
   function processFile(file, next) {
     var action = opts.move ? 'move' : 'copy';
-    file[action](opts.destination, function(err) {
-      if (err) log(file, 'error', err);
-      else log(file, 'success');
-      processingBar.tick();
-      next();
-    });
+    async.series([
+      function(next) {
+        file.read(function(err) {
+          if (err) log(file, 'error', err);
+          if (file.fileSize) totalSize += file.fileSize;
+          next();
+        })
+      },
+      function(next) {
+        file[action](opts.destination, function(err) {
+          if (err) log(file, 'error', err);
+          else log(file, 'success');
+          progress.op();
+          next();
+        });
+      }
+    ], next);
   }
 
   async.waterfall([
-    function readFiles(next) {
-      async.each(files, readFile, next);
-    },
     function processFiles(next) {
-      echo('Total size: %s. Writing to logfile %s', bytes(totalSize), opts.logfile);
-      async.eachSeries(files, processFile, next);
+      async.eachLimit(files, 5, processFile, next);
     }
   ], function onProcessedAllFiles(err) {
     genlogs(files);
