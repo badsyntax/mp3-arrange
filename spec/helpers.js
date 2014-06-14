@@ -39,6 +39,7 @@ helpers.createMp3 = function(opts, done) {
       if (opts.artist) args.push('-a', opts.artist);
       if (opts.album) args.push('-A', opts.album);
       if (opts.title) args.push('-t', opts.title);
+      if (opts.track) args.push('-T', opts.track);
       args.push(opts.filename);
 
       run('id3v2', args, next);

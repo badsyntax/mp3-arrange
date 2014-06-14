@@ -21,7 +21,7 @@ describe('Mp3File', function() {
     fs.removeSync(srcSongPath);
   });
 
-  it('Should read the file id3 metadata', function(done) {
+  it('Should read the file id3 metadata', function(next) {
     async.waterfall([
       function(next) {
         createMp3({
@@ -37,9 +37,9 @@ describe('Mp3File', function() {
         file.read(next);
       }
     ], function(err) {
-      if (err) return done(err);
+      if (err) return next(err);
 
-      expect(!!file.id3Data && !!file.fileSize).toBe(true, 'fileSize and id3Data properties should exist be truthy the file instance');
+      expect(!!file.id3Data && !!file.fileSize).toBe(true, 'fileSize and id3Data properties should exist on the file instance');
       expect(typeof file.fileSize).toBe('number', 'The fileSize should exist on the file instance', file);
       expect(typeof file.id3Data).toBe('object', 'The id3 data should exist on the file instance', file);
 
@@ -49,11 +49,11 @@ describe('Mp3File', function() {
         expect(file.id3Data.artist).toEqual(['Test Artist']);
         expect(file.id3Data.genre).toEqual(['Alternative']);
       }
-      done();
+      next();
     });
   });
 
-  it('Should copy the file to the destination directory', function(done) {
+  function copy(opts, destSong, next) {
     async.waterfall([
       function(next) {
         createMp3({
@@ -61,33 +61,95 @@ describe('Mp3File', function() {
           genre: 20,
           artist: 'Test Artist',
           album: 'Test Album',
-          title: 'Test Title'
+          title: 'Test Title',
+          track: 1
         }, next);
       },
       function(next) {
-        file = new Mp3File(srcSongPath);
+        file = new Mp3File(srcSongPath, opts);
         file.read(next);
       },
       function(next) {
         file.copy(DEST_PATH, next);
       }
     ], function(err) {
-      if (err) return done(err);
+      if (err) return next(err);
       var destPath = path.join(
         DEST_PATH,
         'Alternative',
         'Test Artist',
         'Test Album',
-        song
+        destSong
       );
       var exists = fs.existsSync(destPath);
       fs.removeSync(path.join(
         DEST_PATH,
         'Alternative'
       ));
-      expect(exists).toBe(true);
+      expect(exists).toBe(true, 'Destination file does not exist: ', destPath, file);
       expect(!!file.destFile).toBe(true);
-      done();
+      next();
     });
+  }
+
+  function move(opts, destSong, next) {
+    async.waterfall([
+      function(next) {
+        createMp3({
+          filename: srcSongPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album',
+          title: 'Test Title',
+          track: 1
+        }, next);
+      },
+      function(next) {
+        file = new Mp3File(srcSongPath, opts);
+        file.read(next);
+      },
+      function(next) {
+        file.move(DEST_PATH, next);
+      }
+    ], function(err) {
+      if (err) return next(err);
+      var destPath = path.join(
+        DEST_PATH,
+        'Alternative',
+        'Test Artist',
+        'Test Album',
+        destSong
+      );
+      var existsDest = fs.existsSync(destPath);
+      fs.removeSync(path.join(
+        DEST_PATH,
+        'Alternative'
+      ));
+      expect(existsDest).toBe(true);
+      expect(!!file.destFile).toBe(true);
+      var existsSrc = fs.existsSync(srcSongPath);
+      expect(existsSrc).toBe(false);
+      next();
+    });
+  }
+
+  it('Should copy the file to the destination directory', function(next) {
+    copy({}, song, next);
+  });
+
+  it('Should copy the file to the destination directory with formatted file names', function(next) {
+    copy({
+      'format-filenames': true
+    }, '01 Test Title.mp3', next)
+  });
+
+  it('Should move the file to the destination directory', function(next) {
+    move({}, song, next);
+  });
+
+  it('Should move the file to the destination directory with formatted file names', function(next) {
+    move({
+      'format-filenames': true
+    }, '01 Test Title.mp3', next)
   });
 });

@@ -16,22 +16,22 @@ var opts = require('nomnom')
 .option('source', {
   abbr: 's',
   metavar: 'DIR',
-  help: 'Source directory.',
+  help: 'Source directory',
   required: true,
   callback: function(dir) {
     if (!fs.existsSync(dir)) {
-      return 'Source directory does not exist.';
+      return 'Source directory does not exist';
     }
   }
 })
 .option('destination', {
   abbr: 'd',
   metavar: 'DIR',
-  help: 'Destination directory.',
+  help: 'Destination directory',
   required: true,
   callback: function(dir) {
     if (!fs.existsSync(dir)) {
-      return 'Destination directory does not exist.';
+      return 'Destination directory does not exist';
     }
   }
 })
@@ -45,36 +45,42 @@ var opts = require('nomnom')
   abbr: 'r',
   flag: true,
   default: false,
-  help: 'Do a dry run, no changes will be made, and no logs files will be generated.'
+  help: 'Do a dry run, no changes will be made, and no logs files will be generated'
 })
 .option('skip-unknowns', {
   abbr: 'u',
   flag: true,
   default: true,
-  help: 'Skip processing the file if no id3 data can be read.'
+  help: 'Skip processing the file if no id3 data can be read'
 })
 .option('format-filenames', {
   abbr: 'f',
   flag: true,
   default: true,
-  help: 'Re-name the files to match the song name.'
+  help: 'Re-name the files to match the song name'
 })
 .option('overwrite', {
   abbr: 'o',
   flag: true,
   default: false,
-  help: 'Overwrite the destination file if it exists.'
+  help: 'Overwrite the destination file if it exists'
+})
+.option('move', {
+  abbr: 'm',
+  flag: true,
+  default: false,
+  help: 'Move the files, instead of copying'
 })
 .option('quiet', {
   abbr: 'q',
   flag: true,
   default: false,
-  help: 'Only output errors.'
+  help: 'Only output errors'
 })
 .option('version', {
   abbr: 'v',
   flag: true,
-  help: 'Print version and exit.',
+  help: 'Print version and exit',
   default: false,
   callback: function() {
      return 'version 0.0.1';
@@ -86,9 +92,9 @@ opts = opts.parse();
 
 // Define globals
 var dryRun = opts['dry-run'];
-var processed = {};
+var logs = [];
 
-function log() {
+function echo() {
   if (!opts.quiet) {
     console.log.apply(console, arguments);
   }
@@ -96,38 +102,49 @@ function log() {
 
 function exit(code, msg) {
   code = parseInt(code, 10) || 1;
-  if (msg) log(msg);
+  if (msg) echo(msg);
   process.exit(code);
 }
 
-function logProcessed(file, status, msg) {
-  processed[file.destFile] = {
+function log(file, status, msg) {
+  if (!file.logs) file.logs = [];
+  file.logs.push({
     status: status,
-    errorMsg: msg
-  };
+    msg: msg || ''
+  });
+}
+
+function genlogs(files) {
+  logs = files.map(function(file) {
+    return {
+      srcFile: file.filePath,
+      destFile: file.destFile,
+      logs: file.logs,
+    }
+  })
 }
 
 function writelogs() {
   if (dryRun) return;
-  fs.writeFile(opts.logfile, JSON.stringify(processed, null, 4), function(err) {
+  fs.writeFile(opts.logfile, JSON.stringify(logs, null, 2), function(err) {
     if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
   });
 }
 
 function summary() {
 
-  var errors = Object.keys(processed).filter(function(key) {
-    return processed[key].status === 'error';
+  var errors = logs.filter(function(log) {
+    return (log.status === 'error');
   });
-  var successful = Object.keys(processed).filter(function(key) {
-    return processed[key].status === 'success';
+  var successful = logs.filter(function(log) {
+    return (log.status === 'success');
   });
 
-  log('Copied:', successful.length);
-  log('Skipped:', errors.length);
+  echo('Copied:', successful.length);
+  echo('Skipped:', errors.length);
 
   if (errors.length) {
-    log(
+    echo(
       '!! There were %d errors while copying the files, please see %s for more information.',
       errors.length,
       opts.logfile
@@ -136,7 +153,7 @@ function summary() {
 }
 
 // Begin
-log('Finding files...');
+echo('Finding files...');
 glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
 
   if (err) exit(1, err);
@@ -164,17 +181,17 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
   function readFile(file, next) {
     file.read(function(err) {
       readingBar.tick();
-      if (err) logProcessed(file, 'error', err);
-      else logProcessed(file, 'success');
+      if (err) log(file, 'error', err);
       if (file.fileSize) totalSize += file.fileSize;
       next();
     });
   }
 
   function processFile(file, next) {
-    file.copy(opts.destination, function(err) {
-      if (err) logProcessed(file, 'error', err);
-      else logProcessed(file, 'success');
+    var action = opts.move ? 'move' : 'copy';
+    file[action](opts.destination, function(err) {
+      if (err) log(file, 'error', err);
+      else log(file, 'success');
       processingBar.tick();
       next();
     });
@@ -185,13 +202,12 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
       async.each(files, readFile, next);
     },
     function processFiles(next) {
-      log('Total size: %s. Writing to logfile %s', bytes(totalSize), opts.logfile);
+      echo('Total size: %s. Writing to logfile %s', bytes(totalSize), opts.logfile);
       async.eachSeries(files, processFile, next);
     }
   ], function onProcessedAllFiles(err) {
-    if (opts.logfile) {
-      writelogs();
-    }
+    genlogs(files);
+    writelogs();
     summary();
   });
 });
