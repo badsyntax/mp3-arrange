@@ -3,8 +3,8 @@
 var async = require('async');
 var path = require('path');
 var fs = require('fs-extra');
-var helpers = require('../helpers');
-var Mp3File = require('../../lib/Mp3File');
+var helpers = require('./helpers');
+var Mp3File = require('../Mp3File');
 
 var SOURCE_PATH = 'spec/fixtures/source';
 var DEST_PATH = 'spec/fixtures/dest';

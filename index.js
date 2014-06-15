@@ -8,7 +8,7 @@ var glob = require('glob');
 var async = require('async');
 var pace = require('pace')
 var bytes = require('bytes');
-var Mp3File = require('./lib/Mp3File');
+var Mp3File = require('./Mp3File');
 
 var opts = require('nomnom')
 .option('source', {
@@ -93,7 +93,7 @@ var dryRun = opts['dry-run'];
 var logs = [];
 
 function echo() {
-  if (!opts.quiet)
+  if (!opts.quiet) {
     console.log.apply(console, arguments);
   }
 }

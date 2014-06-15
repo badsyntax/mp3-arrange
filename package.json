@@ -11,7 +11,7 @@
   "author": "Richard Willis <willis.rh@gmail.com>",
   "license": "MIT",
   "bin": {
-    "id3-arrange": "bin/id3-arrange"
+    "id3-arrange": "id3-arrange"
   },
   "preferGlobal": "true",
   "dependencies": {

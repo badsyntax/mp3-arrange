@@ -1,12 +1,12 @@
 /**
- * NOTE: ensure you have run `bin/setup` first.
+ * NOTE: ensure you have run `setup.sh` first.
  */
 'use strict';
 
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
-var helpers = require('../helpers');
+var helpers = require('./helpers');
 
 var SOURCE_PATH = 'spec/fixtures/source';
 var DEST_PATH = 'spec/fixtures/dest';
@@ -19,13 +19,13 @@ describe('bin', function() {
     it('Should exit with code 1 if any of the required options are not supplied', function(next) {
       async.parallel([
         function(next) {
-          run('bin/id3-arrange', [], function(err, code, stdout) {
+          run('id3-arrange', [], function(err, code, stdout) {
             expect(code).toBe(1);
             next();
           });
         },
         function(next) {
-          run('bin/id3-arrange', [
+          run('id3-arrange', [
             '-s', 'none',
             '-d', 'none'
           ], function(err, code, stdout) {
@@ -54,7 +54,7 @@ describe('bin', function() {
           artist: 'Test Artist',
           album: 'Test Album'
         }),
-        run.bind(null, 'bin/id3-arrange', [
+        run.bind(null, 'id3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH,
           '--dry-run'
@@ -99,7 +99,7 @@ describe('bin', function() {
           artist: 'Test Artist 2',
           album: 'Test Album 2'
         }),
-        run.bind(null, 'bin/id3-arrange', [
+        run.bind(null, 'id3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH
         ])
@@ -139,7 +139,7 @@ describe('bin', function() {
           artist: 'Test Artist 2',
           album: 'Test Album 2'
         }),
-        run.bind(null, 'bin/id3-arrange', [
+        run.bind(null, 'id3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH,
           '--move'
@@ -217,7 +217,7 @@ describe('bin', function() {
             next();
           });
         },
-        run.bind(null, 'bin/id3-arrange', args)
+        run.bind(null, 'id3-arrange', args)
       ], function(err) {
         next(err, changed);
       });
