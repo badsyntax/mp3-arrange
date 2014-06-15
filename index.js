@@ -160,7 +160,7 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
   var progress = pace({
     total: found.length,
     showBurden: false,
-    maxBurden: 0.5
+    maxBurden: dryRun ? 0.5 : 80
   });
 
   var files = found.map(function(file) {
