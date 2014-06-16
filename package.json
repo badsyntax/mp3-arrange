@@ -21,11 +21,9 @@
     "fs-extra": "^0.9.1",
     "glob": "^4.0.2",
     "graceful-fs": "^3.0.1",
-    "lodash": "^2.4.1",
     "musicmetadata": "^0.3.11",
     "nomnom": "^1.7.0",
     "pace": "git+http://github.com/badsyntax/pace.git#remove_whitespace",
-    "progress": "^1.1.5"
   },
   "devDependencies": {
     "jasmine-node": "^1.14.3"

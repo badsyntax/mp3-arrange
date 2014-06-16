@@ -1,6 +1,6 @@
 'use strict';
 
-var _ = require('lodash');
+var EventEmitter = require('events').EventEmitter;
 
 var defaultOpts = {
   total: 0,
@@ -15,8 +15,14 @@ var defaultOpts = {
 };
 
 var ProgressBar = module.exports = function(opts) {
-  this.opts = _.merge(defaultOpts, opts);
-  this.current = 0;
+  EventEmitter.call(this);
+  for(var k in defaultOpts) {
+    if (opts[k] === undefined) {
+      opts[k] = defaultOpts[k];
+    }
+  }
+  this.opts = opts;
+  this.current = 1;
   this.total = this.opts.total;
   this.size = this.opts.size;
   this.startTime = 0;
@@ -26,24 +32,30 @@ var ProgressBar = module.exports = function(opts) {
   this.charm.pipe(process.stdout);
 };
 
+ProgressBar.prototype = Object.create(EventEmitter.prototype);
+
 ProgressBar.prototype.tick = function(current) {
-  if (!this.startTime) this.startTime = Date.now();
+  if (!this.startTime) {
+    this.startTime = Date.now();
+    this.emit('start');
+  }
   if (this.current >= this.total) return this.finished();
   if (current) this.current = current;
   else this.current++;
   if ((Date.now() - this.curTime) < this.opts.frequency) return;
   this.curTime = Date.now();
-  this.outputProgess();
+  this.output();
 };
 
-ProgressBar.prototype.outputProgess = function() {
+ProgressBar.prototype.output = function(reset) {
 
+  this.charm.cursor(false);
   this.charm.write(this.opts.action);
   this.charm.write(this.opts.barStart);
 
   this.charm.foreground(this.opts.bgSuccess);
   this.charm.background(this.opts.bgSuccess);
-  for (var i = 0; i < ((this.current / this.total) * this.size) - 1 ; i++) {
+  for (var i = 0; i < ((this.current / this.total) * this.size) - 1; i++) {
     this.charm.write(' ');
   }
 
@@ -62,17 +74,21 @@ ProgressBar.prototype.outputProgess = function() {
     this.size +
     this.opts.barEnd.length
   );
+  if (reset) {
+    this.charm.cursor(true);
+    this.charm.down(1);
+  }
 };
 
 ProgressBar.prototype.finished = function() {
-  this.outputProgess(); // ensure the bar is full
-  this.charm.write('\nFinished');
-  console.log('test');
+  this.output(true); // ensure the bar is full and the cursor position is reset.
+  this.emit('finished');
 };
 
 var progressBar = new ProgressBar({
   total: 100,
-  size: 30,
+  size: 60,
+  frequency: 100,
   bar: ' '
 });
 
@@ -81,5 +97,5 @@ var t = setInterval(function() {
   progressBar.tick();
   c++;
   if (c === 100) clearInterval(t);
-}, 10);
+}, 50);
 
