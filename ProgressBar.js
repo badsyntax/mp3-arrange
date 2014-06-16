@@ -47,9 +47,8 @@ ProgressBar.prototype.tick = function(current) {
   this.output();
 };
 
-ProgressBar.prototype.output = function(reset) {
+ProgressBar.prototype.output = function() {
 
-  this.charm.cursor(false);
   this.charm.write(this.opts.action);
   this.charm.write(this.opts.barStart);
 
@@ -74,22 +73,23 @@ ProgressBar.prototype.output = function(reset) {
     this.size +
     this.opts.barEnd.length
   );
-  if (reset) {
-    this.charm.cursor(true);
-    this.charm.down(1);
-  }
 };
 
 ProgressBar.prototype.finished = function() {
-  this.output(true); // ensure the bar is full and the cursor position is reset.
-  this.emit('finished');
+  this.output(); // ensure the bar is full.
+  this.charm.end('\n');
+  this.emit('finish');
 };
 
 var progressBar = new ProgressBar({
   total: 100,
-  size: 60,
+  size: 30,
   frequency: 100,
   bar: ' '
+});
+
+progressBar.on('finish', function() {
+  console.log('Finished!');
 });
 
 var c = 0;
@@ -97,5 +97,5 @@ var t = setInterval(function() {
   progressBar.tick();
   c++;
   if (c === 100) clearInterval(t);
-}, 50);
+}, 20);
 
