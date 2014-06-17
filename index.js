@@ -6,9 +6,9 @@ var fs = require('graceful-fs');
 var path = require('path');
 var glob = require('glob');
 var async = require('async');
-var pace = require('pace')
 var bytes = require('bytes');
 var Mp3File = require('./Mp3File');
+var ProgressBar = require('./ProgressBar');
 
 var opts = require('nomnom')
 .option('source', {
@@ -149,7 +149,7 @@ function summary() {
 }
 
 // Begin
-echo('Finding files...\n');
+echo('Finding files...');
 glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
 
   if (err) exit(1, err);
@@ -157,10 +157,10 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
   var totalSize = 0;
   var barMsg = '%s :current of :total [:bar] :percent ETA: :etas';
 
-  var progress = pace({
+  var progressBar = new ProgressBar({
     total: found.length,
-    showBurden: false,
-    maxBurden: dryRun ? 0.5 : 80
+    size: 30,
+    frequency: 100,
   });
 
   var files = found.map(function(file) {
@@ -184,7 +184,7 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
         file[action](opts.destination, function(err) {
           if (err) log(file, 'error', err);
           else log(file, 'success');
-          progress.op();
+          progressBar.progress();
           next();
         });
       }
@@ -196,6 +196,7 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
       async.eachLimit(files, 5, processFile, next);
     }
   ], function onProcessedAllFiles(err) {
+    echo('Total size:', bytes(totalSize));
     genlogs(files);
     writelogs();
     summary();

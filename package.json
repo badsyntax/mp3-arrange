@@ -24,7 +24,6 @@
     "handlebars": "^2.0.0-alpha.4",
     "musicmetadata": "^0.3.11",
     "nomnom": "^1.7.0",
-    "pace": "git+http://github.com/badsyntax/pace.git#remove_whitespace"
   },
   "devDependencies": {
     "jasmine-node": "^1.14.3"

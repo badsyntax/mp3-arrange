@@ -170,7 +170,7 @@ ProgressBar.prototype.getPercent = function() {
 };
 
 ProgressBar.prototype.getPosition = function() {
-  var totalLength = String(this.opts.total).length;
+  var totalLength = String(this.opts.total).length + 1;
   return pad(new Array(totalLength).join(' '), this.current) + '/' + this.opts.total;
 };
 
@@ -180,29 +180,27 @@ ProgressBar.prototype.setElapsed = function() {
 
 ProgressBar.prototype.setRemaining = function(s) {
   if (!this.avgTime) return '';
+  // console.log('set remaining');
   var avgMs = Math.floor(this.avgTime / this.current);
-  var ms = avgMs * (this.opts.total - this.current);
+  var ms = (avgMs * (this.opts.total - this.current)) + (Date.now() - this.curTime);
   this.remaining = formatTime(ms)
 };
 
+// var progressBar = new ProgressBar({
+//   total: 1000,
+//   size: 30,
+//   frequency: 100,
+// });
 
+// progressBar.on('finish', function() {
+//   console.log('Finished!1');
+// });
 
-var progressBar = new ProgressBar({
-  total: 1000,
-  size: 30,
-  frequency: 100,
-  bar: ' '
-});
+// var c = 0;
+// var t = setInterval(function() {
+//   c++;
+//   progressBar.progress();
 
-progressBar.on('finish', function() {
-  console.log('Finished!1');
-});
-
-var c = 0;
-var t = setInterval(function() {
-  c++;
-  progressBar.progress();
-
-  if (c === 1000) clearInterval(t);
-}, 10);
+//   if (c === 1000) clearInterval(t);
+// }, 10);
 
