@@ -3,7 +3,7 @@
 var EventEmitter = require('events').EventEmitter;
 
 function pad(char, val) {
-  return (char + val).slice(-char.length);
+  return (char + String(val)).slice(-char.length);
 }
 
 function formatTime(ms) {
@@ -90,6 +90,7 @@ ProgressBar.prototype.start = function() {
   this.interval = setInterval(function() {
     this.setRemaining();
     this.setElapsed();
+    this.output();
   }.bind(this), 1000);
 };
 
@@ -179,28 +180,9 @@ ProgressBar.prototype.setElapsed = function() {
 };
 
 ProgressBar.prototype.setRemaining = function(s) {
-  if (!this.avgTime) return '';
-  // console.log('set remaining');
   var avgMs = Math.floor(this.avgTime / this.current);
-  var ms = (avgMs * (this.opts.total - this.current)) + (Date.now() - this.curTime);
+  var remainingItems = (this.opts.total - this.current);
+  var extraMs = 0;
+  var ms = (avgMs * remainingItems) + extraMs;
   this.remaining = formatTime(ms)
 };
-
-// var progressBar = new ProgressBar({
-//   total: 1000,
-//   size: 30,
-//   frequency: 100,
-// });
-
-// progressBar.on('finish', function() {
-//   console.log('Finished!1');
-// });
-
-// var c = 0;
-// var t = setInterval(function() {
-//   c++;
-//   progressBar.progress();
-
-//   if (c === 1000) clearInterval(t);
-// }, 10);
-

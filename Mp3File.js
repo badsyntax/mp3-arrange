@@ -1,9 +1,12 @@
-var fs = require('fs');
-var fsExtra = require('fs-extra');
+var fs = require('fs-extra');
 var path = require('path');
 var mm = require('musicmetadata');
 var async = require('async');
 var util = require('util');
+
+function pad(char, val) {
+  return (char + String(val)).slice(-char.length);
+}
 
 var Mp3File = module.exports = function(filePath, opts) {
   this.filePath = filePath;
@@ -50,13 +53,11 @@ Mp3File.prototype.copy = function(destination, done) {
   var destFile = this.destFile = this.getDestFileName(destination);
 
   fs.exists(destFile, function (exists) {
-    if (exists && !this.opts.overwrite) {
+    if (exists && !this.opts.overwrite)
       return done('File already exists', destFile);
-    }
-    if (this.opts['dry-run']) {
+    if (this.opts['dry-run'])
       return done(null, destFile);
-    }
-    fsExtra.copy(this.filePath, destFile, function onCopy(err) {
+    fs.copy(this.filePath, destFile, function onCopy(err) {
       done(err, destFile);
     });
   }.bind(this));
@@ -67,13 +68,11 @@ Mp3File.prototype.move = function(destination, done) {
   var destFile = this.destFile = this.getDestFileName(destination);
 
   fs.exists(destFile, function (exists) {
-    if (exists && !this.opts.overwrite) {
-      fsExtra.remove(this.filePath, done);
-    }
-    if (this.opts['dry-run']) {
+    if (exists && !this.opts.overwrite)
+      fs.remove(this.filePath, done);
+    if (this.opts['dry-run'])
       return done(null, destFile);
-    }
-    fsExtra.move(this.filePath, destFile, function onCopy(err) {
+    fs.move(this.filePath, destFile, function onCopy(err) {
       done(err, destFile);
     });
   }.bind(this));
@@ -81,10 +80,9 @@ Mp3File.prototype.move = function(destination, done) {
 
 Mp3File.prototype.getDestFileName = function(destination) {
 
-  var genre = this.id3Data.genre[0] || 'Unknown Genre';
-  var artist = this.id3Data.artist[0] || 'Unknown Artist';
-  var album = this.id3Data.album || 'Uknown Abum';
-
+  var genre   = this.id3Data.genre[0] || 'Unknown Genre';
+  var artist  = this.id3Data.artist[0] || 'Unknown Artist';
+  var album   = this.id3Data.album || 'Uknown Abum';
   var destDir = path.resolve(destination, genre, artist, album);
 
   // Default track name.
@@ -93,7 +91,7 @@ Mp3File.prototype.getDestFileName = function(destination) {
 
   if (this.opts['format-filenames'] && this.id3Data.title) {
     // add leading zeros
-    var trackNo = hasTrackData ? (('00' + parseInt(this.id3Data.track.no)).slice(-2) + ' ') : '';
+    var trackNo = hasTrackData ? (pad('00', parseInt(this.id3Data.track.no)) + ' ') : '';
     // eg: 04 My Track.mp3
     destTrackName = util.format('%s%s.mp3', trackNo, this.id3Data.title);
   }

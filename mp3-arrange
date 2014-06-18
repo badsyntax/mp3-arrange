@@ -1,7 +1,10 @@
+#!/usr/bin/env node
+
 'use strict';
 
+var pkg = require('./package');
 var util = require('util');
-var fsExtra = require('fs-extra');
+var fs = require('fs-extra');
 var path = require('path');
 var glob = require('glob');
 var async = require('async');
@@ -80,7 +83,7 @@ var opts = require('nomnom')
   help: 'Print version and exit',
   default: false,
   callback: function() {
-     return 'version 0.0.1';
+     return 'version ' + pkg.version;
   }
 });
 
@@ -173,7 +176,7 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
   function processFile(file, done) {
     var action = opts.move ? 'move' : 'copy';
     async.series([
-      function(next) {
+     function(next) {
         file.read(function(err) {
           if (err) log(file, 'error', err);
           if (file.fileSize) totalSize += file.fileSize;
@@ -191,11 +194,7 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
     ], done);
   }
 
-  async.waterfall([
-    function processFiles(next) {
-      async.eachSeries(files, processFile, next);
-    }
-  ], function onProcessedAllFiles(err) {
+  async.eachSeries(files, processFile, function() {
     echo('Total size:', bytes(totalSize));
     genlogs(files);
     writelogs();
