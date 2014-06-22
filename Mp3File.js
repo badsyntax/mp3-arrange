@@ -8,12 +8,22 @@ function pad(char, val) {
   return (char + String(val)).slice(-char.length);
 }
 
-var Mp3File = module.exports = function(filePath, opts) {
+var Mp3File = module.exports = function(filePath, opts, logger) {
   this.filePath = filePath;
   this.opts = opts || {};
+  this.logger = logger;
   this.id3Data = null;
   this.fileSize = null;
 };
+
+Mp3File.prototype.process = function(action, destination, done) {
+  this.read(function(err) {
+    if (err) return done(err);
+    if (!this.id3Data) return done('No file metadata');
+    var destFile = this.getDestFileName(destination);
+    this[action](destFile, done);
+  }.bind(this));
+}
 
 Mp3File.prototype.read = function(done) {
   async.waterfall([
@@ -48,10 +58,8 @@ Mp3File.prototype.readMetadata = function(done) {
   });
 };
 
-Mp3File.prototype.copy = function(destination, done) {
-  if (!this.id3Data) return done('No file metadata');
-  var destFile = this.destFile = this.getDestFileName(destination);
 
+Mp3File.prototype.copy = function(destFile, done) {
   fs.exists(destFile, function (exists) {
     if (exists && !this.opts.overwrite)
       return done('File already exists', destFile);
@@ -63,10 +71,7 @@ Mp3File.prototype.copy = function(destination, done) {
   }.bind(this));
 };
 
-Mp3File.prototype.move = function(destination, done) {
-  if (!this.id3Data) return done('No file metadata');
-  var destFile = this.destFile = this.getDestFileName(destination);
-
+Mp3File.prototype.move = function(destFile, done) {
   fs.exists(destFile, function (exists) {
     if (exists && !this.opts.overwrite)
       fs.remove(this.filePath, done);
@@ -85,19 +90,30 @@ Mp3File.prototype.getDestFileName = function(destination) {
   var album   = this.id3Data.album || 'Uknown Abum';
   var destDir = path.resolve(destination, genre, artist, album);
 
-  // Default track name.
+  // Default track name
   var destTrackName = path.basename(this.filePath);
-  var hasTrackData = (this.id3Data.track && this.id3Data.track.no);
 
+  // If we're formatting filename, we need at least the track title
   if (this.opts['format-filenames'] && this.id3Data.title) {
-    // add leading zeros
+
+    // Get track data.
+    var hasTrackData = (this.id3Data.track && this.id3Data.track.no);
     var trackNo = hasTrackData ? (pad('00', parseInt(this.id3Data.track.no)) + ' ') : '';
-    // eg: 04 My Track.mp3
+
+    // Add track & title, eg: 04 My Track.mp3
     destTrackName = util.format('%s%s.mp3', trackNo, this.id3Data.title);
   }
 
-  // Full path to file.
+  // Full path to file
   var destFile = path.join(destDir, destTrackName);
 
   return destFile;
 };
+
+Mp3File.prototype.log = function(status, msg) {
+  this.logger.log(status, msg, {
+    srcFile: this.filePath,
+    destFile: this.destFile,
+    fileSize: this.fileSize
+  });
+}

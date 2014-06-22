@@ -6,9 +6,12 @@ var pkg = require('./package');
 var util = require('util');
 var fs = require('fs-extra');
 var path = require('path');
+
 var glob = require('glob');
 var async = require('async');
 var bytes = require('bytes');
+var winston = require('winston');
+
 var Mp3File = require('./Mp3File');
 var ProgressBar = require('./ProgressBar');
 
@@ -39,7 +42,7 @@ var opts = require('nomnom')
   abbr: 'l',
   metavar: 'FILE',
   help: 'Log file',
-  default: 'logs.json'
+  default: 'logs-mp3-arrange.txt'
 })
 .option('dry-run', {
   abbr: 'r',
@@ -90,9 +93,16 @@ var opts = require('nomnom')
 // Parse the arguments
 opts = opts.parse();
 
-// Define globals
-var dryRun = opts['dry-run'];
-var logs = [];
+// Create logger
+var logger = new (winston.Logger)({
+  transports: [
+    new (winston.transports.File)({
+      filename: opts.logfile,
+    })
+  ]
+});
+
+var startTime = new Date();
 
 function echo() {
   if (!opts.quiet) {
@@ -105,55 +115,43 @@ function exit(code, msg) {
   process.exit(code);
 }
 
-function log(file, status, msg) {
-  file.log = {
-    status: status,
-    msg: msg || ''
-  };
-}
-
-function genlogs(files) {
-  logs = files.map(function(file) {
-    return {
-      status: file.log.status,
-      msg: file.log.msg,
-      srcFile: file.filePath,
-      destFile: file.destFile,
-      file: file
-    };
-  })
-}
-
-function writelogs() {
-  fs.writeFile(opts.logfile, JSON.stringify(logs, null, 2), function(err) {
-    if(err) exit(1, 'Error writing log file! (' + opts.logfile + ') ' + err);
-  });
-}
-
 function summary() {
 
-  var errors = logs.filter(function(log){
-    return (log.status === 'error');
-  });
-  var success = logs.filter(function(log){
-    return (log.status === 'success');
-  });
+   var options = {
+    from: startTime,
+    until: new Date,
+    limit: Infinity,
+    start: 0,
+    order: 'desc',
+    fields: ['level']
+  };
 
-  echo('Copied:', success.length);
-  echo('Skipped:', errors.length);
+  logger.query(options, function (err, logs) {
+    if (err) throw err;
 
-  if (errors.length) {
-    echo(
-      '!! There were %d errors while copying the files, please see %s for more information.',
-      errors.length,
-      opts.logfile
-    );
-  }
+    var errors = logs['file'].filter(function(log){
+      return (log.level === 'error');
+    });
+    var success = logs['file'].filter(function(log){
+      return (log.level === 'success');
+    });
+
+    echo('Logs:', opts.logfile);
+    echo('Copied:', success.length);
+    echo('Skipped:', errors.length);
+
+    if (errors.length) {
+      echo(
+        'There were %d errors while copying the files, please see %s for more information.',
+        errors.length,
+        opts.logfile
+      );
+    }
+  });
 }
 
-// Begin
-process.stdout.write('Finding files...');
-glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
+function onFindFiles(err, found) {
+
   process.stdout.write('done\n');
   if (err) exit(1, err);
 
@@ -169,41 +167,34 @@ glob('**/*.mp3', { cwd: opts.source }, function onFindFiles(err, found) {
   var files = found.map(function(file) {
     return new Mp3File(
       path.join(opts.source, file),
-      opts
+      opts,
+      logger
     );
   });
 
   function processFile(file, done) {
     var action = opts.move ? 'move' : 'copy';
-    async.series([
-     function(next) {
-        file.read(function(err) {
-          if (err) log(file, 'error', err);
-          if (file.fileSize) totalSize += file.fileSize;
-          next();
-        })
-      },
-      function(next) {
-        file[action](opts.destination, function(err) {
-          if (err) log(file, 'error', err);
-          else log(file, 'success');
-          progressBar.progress();
-          next();
-        });
-      }
-    ], done);
+    file.process(action, opts.destination, function(err) {
+      if (err) file.log('error', err);
+      else file.log('success');
+      progressBar.progress();
+      if (file.fileSize) totalSize += file.fileSize;
+      done();
+    });
   }
 
   async.eachSeries(files, processFile, function() {
     echo('Total size:', bytes(totalSize));
-    genlogs(files);
-    writelogs();
     summary();
   });
-});
+}
 
 // Handle interruptions
 process.on('SIGINT', function() {
   summary();
   process.exit();
 });
+
+// Begin
+process.stdout.write('Finding files...');
+glob('**/*.mp3', { cwd: opts.source }, onFindFiles);

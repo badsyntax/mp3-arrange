@@ -19,13 +19,13 @@ describe('bin', function() {
     it('Should exit with code 1 if any of the required options are not supplied', function(next) {
       async.parallel([
         function(next) {
-          run('id3-arrange', [], function(err, code, stdout) {
+          run('mp3-arrange', [], function(err, code, stdout) {
             expect(code).toBe(1);
             next();
           });
         },
         function(next) {
-          run('id3-arrange', [
+          run('mp3-arrange', [
             '-s', 'none',
             '-d', 'none'
           ], function(err, code, stdout) {
@@ -54,7 +54,7 @@ describe('bin', function() {
           artist: 'Test Artist',
           album: 'Test Album'
         }),
-        run.bind(null, 'id3-arrange', [
+        run.bind(null, 'mp3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH,
           '--dry-run'
@@ -99,7 +99,7 @@ describe('bin', function() {
           artist: 'Test Artist 2',
           album: 'Test Album 2'
         }),
-        run.bind(null, 'id3-arrange', [
+        run.bind(null, 'mp3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH
         ])
@@ -139,7 +139,7 @@ describe('bin', function() {
           artist: 'Test Artist 2',
           album: 'Test Album 2'
         }),
-        run.bind(null, 'id3-arrange', [
+        run.bind(null, 'mp3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH,
           '--move'
@@ -217,7 +217,7 @@ describe('bin', function() {
             next();
           });
         },
-        run.bind(null, 'id3-arrange', args)
+        run.bind(null, 'mp3-arrange', args)
       ], function(err) {
         next(err, changed);
       });

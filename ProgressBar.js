@@ -52,6 +52,7 @@ var ProgressBar = module.exports = function(opts) {
 
   this.charm = require('charm')();
   this.charm.pipe(process.stdout);
+  this.charm.reset();
 
   this.charm.on('^C', function onExit() {
     this.charm.display('reset');

@@ -20,8 +20,10 @@
     "charm": "^0.2.0",
     "fs-extra": "^0.9.1",
     "glob": "^4.0.2",
+    "lodash": "^2.4.1",
     "musicmetadata": "^0.3.11",
-    "nomnom": "^1.7.0"
+    "nomnom": "^1.7.0",
+    "winston": "^0.7.3"
   },
   "devDependencies": {
     "jasmine-node": "^1.14.3"
