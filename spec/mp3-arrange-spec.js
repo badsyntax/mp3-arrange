@@ -44,6 +44,7 @@ describe('bin', function() {
 
     afterEach(function() {
       fs.removeSync(songPath);
+      fs.removeSync(path.join(DEST_PATH, 'Alternative'));
     });
 
     it('Should NOT copy the file when the dry run option is set', function(next) {
@@ -239,4 +240,35 @@ describe('bin', function() {
       });
     });
   });
+
+  describe('Quiet', function() {
+
+    var song = 'song.mp3';
+    var songPath = path.join(SOURCE_PATH, song);
+
+    afterEach(function() {
+      fs.removeSync(songPath);
+      fs.removeSync(path.join(DEST_PATH, 'Alternative'));
+    });
+
+    it('Should not send any data to stdout when the quiet option is set', function(next) {
+      async.waterfall([
+        createMp3.bind(null, {
+          filename: songPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album'
+        }),
+        run.bind(null, 'mp3-arrange', [
+          '-s', SOURCE_PATH,
+          '-d', DEST_PATH,
+          '-q'
+        ])
+      ], function(err, code, stdout) {
+        if (err) return next(err);
+        expect(String(stdout).length).toBe(0);
+        next();
+      });
+    });
+  })
 });
