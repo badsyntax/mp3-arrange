@@ -27,7 +27,8 @@ var defaultOpts = {
   bgSuccess: 'green',
   tpl: [
     'Processing: {bar} {position} {percent}',
-    'Elapsed: {elapsed} - Remaining: {remaining}'
+    'Remaining: {remaining}',
+    'Elapsed: {elapsed}'
   ].join('\n')
 };
 
@@ -52,7 +53,7 @@ var ProgressBar = module.exports = function(opts) {
 
   this.charm = require('charm')();
   this.charm.pipe(process.stdout);
-  this.charm.reset();
+  // if (!this.opts.quiet) this.charm.reset();
 
   this.charm.on('^C', function onExit() {
     this.charm.display('reset');
@@ -103,6 +104,7 @@ ProgressBar.prototype.finish = function() {
 };
 
 ProgressBar.prototype.output = function(end) {
+  if (this.opts.quiet) return;
   var lines = this.opts.tpl.split('\n');
   lines.forEach(this.outputLine.bind(this));
   if (!end) this.charm.up(lines.length);
@@ -152,14 +154,13 @@ ProgressBar.prototype.outputLine = function(tpl, i) {
 
 ProgressBar.prototype.outputBar = function() {
   // Bar progress
-  this.charm.foreground(this.opts.bgSuccess);
-  this.charm.background(this.opts.bgSuccess);
-  for (var i = 0; i < ((this.current / this.opts.total) * this.opts.size) - 1; i++) {
+  this.charm.foreground(this.opts.bgSuccess).background(this.opts.bgSuccess);
+  var curAmount = ((this.current / this.opts.total) * this.opts.size) -1;
+  for (var i = 0; i < curAmount; i++) {
     this.charm.write(' ');
   }
   // Bar background
-  this.charm.foreground(this.opts.bgDefault);
-  this.charm.background(this.opts.bgDefault);
+  this.charm.foreground(this.opts.bgDefault).background(this.opts.bgDefault);
   while (i < this.opts.size - 1) {
     this.charm.write(' ');
     i++;
@@ -183,7 +184,6 @@ ProgressBar.prototype.setElapsed = function() {
 ProgressBar.prototype.setRemaining = function(s) {
   var avgMs = Math.floor(this.avgTime / this.current);
   var remainingItems = (this.opts.total - this.current);
-  var extraMs = 0;
-  var ms = (avgMs * remainingItems) + extraMs;
+  var ms = avgMs * remainingItems;
   this.remaining = formatTime(ms)
 };

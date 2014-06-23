@@ -20,7 +20,7 @@ Mp3File.prototype.process = function(action, destination, done) {
   this.read(function(err) {
     if (err) return done(err);
     if (!this.id3Data) return done('No file metadata');
-    var destFile = this.getDestFileName(destination);
+    var destFile = this.destFile = this.getDestFileName(destination);
     this[action](destFile, done);
   }.bind(this));
 }
@@ -41,8 +41,6 @@ Mp3File.prototype.readFileSize = function(done) {
 };
 
 Mp3File.prototype.readMetadata = function(done) {
-
-  if (this.opts['dry-run']) return done();
 
   var stream = fs.createReadStream(this.filePath);
   var parser = mm(stream);
@@ -88,7 +86,7 @@ Mp3File.prototype.getDestFileName = function(destination) {
   var genre   = this.id3Data.genre[0] || 'Unknown Genre';
   var artist  = this.id3Data.artist[0] || 'Unknown Artist';
   var album   = this.id3Data.album || 'Uknown Abum';
-  var destDir = path.resolve(destination, genre, artist, album);
+  var destDir = path.join(destination, genre, artist, album);
 
   // Default track name
   var destTrackName = path.basename(this.filePath);

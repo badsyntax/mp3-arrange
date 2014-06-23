@@ -2,11 +2,9 @@
   "name": "mp3-tools",
   "version": "0.0.1",
   "description": "A collection of scripts that organise your mp3 collection",
-  "main": "index.js",
   "private": "true",
   "scripts": {
-    "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall",
-    "setup": "bin/setup"
+    "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall"
   },
   "author": "Richard Willis <willis.rh@gmail.com>",
   "license": "MIT",

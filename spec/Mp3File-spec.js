@@ -70,7 +70,7 @@ describe('Mp3File', function() {
         file.read(next);
       },
       function(next) {
-        file.copy(DEST_PATH, next);
+        file.process('copy', DEST_PATH, next);
       }
     ], function(err) {
       if (err) return next(err);
@@ -109,7 +109,7 @@ describe('Mp3File', function() {
         file.read(next);
       },
       function(next) {
-        file.move(DEST_PATH, next);
+        file.process('move', DEST_PATH, next);
       }
     ], function(err) {
       if (err) return next(err);
