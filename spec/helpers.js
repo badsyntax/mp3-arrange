@@ -1,5 +1,10 @@
-var async = require('async');
 var spawn = require('child_process').spawn;
+var path = require('path');
+var async = require('async');
+var fs = require('fs-extra');
+
+var SOURCE_PATH = 'spec/fixtures/source';
+var DEST_PATH = 'spec/fixtures/dest';
 
 var helpers = module.exports = {};
 
@@ -49,3 +54,33 @@ helpers.createMp3 = function(opts, done) {
     else done();
   });
 };
+
+helpers.createMp3s = function(amount, done) {
+
+  var mp3s = [];
+  var create = [];
+
+  for(var i = 1; i <= amount; i++) {
+
+    var data = {
+      filename: path.join(SOURCE_PATH, 'song'+i+'.mp3'),
+      genre: 20,
+      artist: 'Test Artist',
+      album: 'Test Album'
+    };
+
+    mp3s.push(data);
+    create.push(helpers.createMp3.bind(null, data));
+  }
+
+  async.parallel(create, function(err) {
+    if (err) return done(err);
+    done(null, mp3s);
+  });
+};
+
+helpers.removeMp3s = function(mp3s) {
+  mp3s.forEach(function(mp3) {
+    fs.removeSync(mp3.filename);
+  });
+}

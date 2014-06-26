@@ -2,7 +2,7 @@
 
 'use strict';
 
-var pkg = require('./package');
+var pkg = require('../package');
 var util = require('util');
 var fs = require('fs-extra');
 var path = require('path');
@@ -12,11 +12,21 @@ var async = require('async');
 var bytes = require('bytes');
 var winston = require('winston');
 
-var Mp3File = require('./Mp3File');
-var ProgressBar = require('./ProgressBar');
+var Mp3File = require('../Mp3File');
+var ProgressBar = require('../ProgressBar');
 
-var logger = null;
-var startTime = null;
+var startTime = new Date();
+
+var logger = logger = new (winston.Logger)({
+  levels: {
+    debug: 0,
+    verbose: 1,
+    info: 2,
+    warn: 3,
+    error: 4,
+    success: 5
+  }
+});
 
 var opts = require('nomnom')
 .option('source', {
@@ -75,7 +85,13 @@ var opts = require('nomnom')
   abbr: 'm',
   flag: true,
   default: false,
-  help: 'Move the files, instead of copying'
+  help: 'Move the files instead of copying'
+})
+.option('save-progress', {
+  abbr: 'S',
+  flag: true,
+  default: false,
+  help: 'Save progress'
 })
 .option('quiet', {
   abbr: 'q',
@@ -112,10 +128,11 @@ function summary() {
     limit: Infinity,
     start: 0,
     order: 'desc',
-    fields: ['level']
+    fields: ['level','fileSize']
   };
 
   logger.query(options, function (err, logs) {
+
     if (err) throw err;
 
     var errors = logs.file.filter(function(log){
@@ -125,19 +142,33 @@ function summary() {
       return (log.level === 'success');
     });
 
-    echo('Copied:', success.length);
-    echo('Skipped:', errors.length);
+    var totalSize = 0;
+    logs.file.forEach(function(log) {
+      totalSize += log.fileSize;
+    })
+
+    var errorsFileSize = 0;
+    errors.forEach(function(log) {
+      errorsFileSize += log.fileSize;
+    });
+
+    var successFileSize = 0;
+    success.forEach(function(log) {
+      successFileSize += log.fileSize;
+    });
+
+    echo('Copied: %d (%s)', success.length, bytes(successFileSize));
+    echo('Skipped: %d (%s)', errors.length, bytes(errorsFileSize));
+    echo('Source size: %s', bytes(totalSize));
     echo('See %s for more information.', opts.logfile);
   });
 }
 
 function onFindFiles(err, found) {
 
-  if (!opts.quiet) process.stdout.write('done (' + found.length + ')\n');
+  if (!opts.quiet) process.stdout.write('done\n');
   if (err) exit(1, err);
 
-  var totalSize = 0;
-  var totalSuccessSize = 0;
   var barMsg = '%s :current of :total [:bar] :percent ETA: :etas';
 
   var progressBar = new ProgressBar({
@@ -160,21 +191,17 @@ function onFindFiles(err, found) {
     file.process(action, opts.destination, function(err) {
       progressBar.progress();
       if (err) file.log('error', err);
-      else {
-        file.log('success', 'Successfully ' + (opts.move ? 'moved' : 'copied'));
-        totalSuccessSize += file.fileSize;
-      }
-      if (file.fileSize) totalSize += file.fileSize;
+      else file.log('success', 'Successfully ' + (opts.move ? 'moved' : 'copied'));
       done();
     });
   }
 
-  async.eachSeries(files, processFile, function() {
-    echo('Source files:', bytes(totalSize));
-    echo('%s files: %s', (opts.move ? 'Moved' : 'Copied'), bytes(totalSuccessSize));
-    summary();
-  });
+  async.eachSeries(files, processFile, summary);
 }
+
+/***********
+ * BEGIN
+ ***********/
 
 // Handle interruptions
 process.on('SIGINT', function() {
@@ -185,26 +212,16 @@ process.on('SIGINT', function() {
 // Parse the arguments
 opts = opts.parse();
 
-// Begin
-startTime = new Date();
+// Prep logs
 fs.removeSync(opts.logfile);
-logger = new (winston.Logger)({
-  levels: {
-    debug: 0,
-    verbose: 1,
-    info: 2,
-    warn: 3,
-    error: 4,
-    success: 5
-  },
-  transports: [
-    new (winston.transports.File)({
-      filename: opts.logfile,
-    })
-  ]
+logger.add(winston.transports.File, {
+  filename: opts.logfile,
 });
+
 if (!opts.quiet) {
   process.stdout.write('\u001B[2J\u001B[0;0f'); // clear terminal
   process.stdout.write('Finding files...');
 }
+
+// Find the source files
 glob('**/*.mp3', { cwd: opts.source }, onFindFiles);

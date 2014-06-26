@@ -9,7 +9,7 @@
   "author": "Richard Willis <willis.rh@gmail.com>",
   "license": "MIT",
   "bin": {
-    "mp3-arrange": "mp3-arrange"
+    "mp3-arrange": "bin/mp3-arrange"
   },
   "preferGlobal": "true",
   "dependencies": {
