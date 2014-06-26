@@ -70,7 +70,7 @@ helpers.createMp3s = function(amount, done) {
     };
 
     mp3s.push(data);
-    create.push(helpers.createMp3.bind(null, data));
+    create.push(createMp3.bind(null, data));
   }
 
   async.parallel(create, function(err) {

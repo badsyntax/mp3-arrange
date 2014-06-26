@@ -11,6 +11,7 @@ var glob = require('glob');
 var async = require('async');
 var bytes = require('bytes');
 var winston = require('winston');
+var numeral = require('numeral');
 
 var Mp3File = require('../Mp3File');
 var ProgressBar = require('../ProgressBar');
@@ -91,7 +92,7 @@ var opts = require('nomnom')
   abbr: 'S',
   flag: true,
   default: false,
-  help: 'Save progress'
+  help: 'Save (and resume) progress'
 })
 .option('quiet', {
   abbr: 'q',
@@ -120,6 +121,27 @@ function exit(code, msg) {
   process.exit(code);
 }
 
+function saveProgressToFile(logs) {
+  var progress = {}
+  logs.forEach(function(log) {
+    progress[log.srcFile] = log;
+  });
+  var location = path.join(opts.destination, 'mp3-tools.progress.json');
+  fs.writeFileSync(location, JSON.stringify(progress));
+}
+
+function readProgressFromFile() {
+  var processedFiles = {};
+  var progressFile = path.join(opts.destination, 'mp3-tools.progress.json');
+  if (opts['save-progress'] && fs.existsSync(progressFile)) {
+    try {
+      processedFiles = require(path.resolve(progressFile));
+      echo('NOTE: Skipping processed files in %s', progressFile);
+    } catch(e) {};
+  }
+  return processedFiles;
+}
+
 function summary() {
 
    var options = {
@@ -128,12 +150,13 @@ function summary() {
     limit: Infinity,
     start: 0,
     order: 'desc',
-    fields: ['level','fileSize']
+    fields: ['level','fileSize','srcFile','destFile','message']
   };
 
   logger.query(options, function (err, logs) {
 
     if (err) throw err;
+    if (opts['save-progress']) saveProgressToFile(logs.file);
 
     var errors = logs.file.filter(function(log){
       return (log.level === 'error');
@@ -169,7 +192,7 @@ function onFindFiles(err, found) {
   if (!opts.quiet) process.stdout.write('done\n');
   if (err) exit(1, err);
 
-  var barMsg = '%s :current of :total [:bar] :percent ETA: :etas';
+  var processedFiles = readProgressFromFile();
 
   var progressBar = new ProgressBar({
     total: found.length,
@@ -187,13 +210,22 @@ function onFindFiles(err, found) {
   });
 
   function processFile(file, done) {
-    var action = opts.move ? 'move' : 'copy';
-    file.process(action, opts.destination, function(err) {
+    if (opts['save-progress'] && (file.filePath in processedFiles)) {
       progressBar.progress();
-      if (err) file.log('error', err);
-      else file.log('success', 'Successfully ' + (opts.move ? 'moved' : 'copied'));
-      done();
-    });
+      var processed = processedFiles[file.filePath];
+      logger.log(processed.level, processed.message, {
+        srcFile: processed.srcFile,
+        destFile: processed.destFile,
+        fileSize: processed.fileSize
+      }, done);
+    } else {
+      var action = opts.move ? 'move' : 'copy';
+      file.process(action, opts.destination, function(err) {
+        progressBar.progress();
+        if (err) file.log('error', err, null, done);
+        else file.log('success', 'Successfully ' + (opts.move ? 'moved' : 'copied'), null, done);
+      });
+    }
   }
 
   async.eachSeries(files, processFile, summary);

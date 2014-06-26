@@ -290,6 +290,16 @@ describe('bin', function() {
 
         expect(exists).toBe(true, 'The progress log file should exist at location: ' + location);
 
+        var data = fs.readFileSync(location);
+        try {
+          data = JSON.parse(data);
+        } catch(e){};
+
+        expect(data instanceof Array).toBe(true, 'The progress data should be stored in JSON format as an array');
+        expect(data.length).toBe(4, 'The progress array should contain all files');
+
+        fs.removeSync(location);
+
         var songs = results[0];
         helpers.removeMp3s(songs);
         next();

@@ -21,6 +21,7 @@
     "lodash": "^2.4.1",
     "musicmetadata": "^0.3.11",
     "nomnom": "^1.7.0",
+    "numeral": "^1.5.3",
     "winston": "^0.7.3"
   },
   "devDependencies": {

@@ -1,22 +1,14 @@
 'use strict';
 
 var EventEmitter = require('events').EventEmitter;
+var numeral = require('numeral');
 
 function pad(char, val) {
   return (char + String(val)).slice(-char.length);
 }
 
 function formatTime(ms) {
-  var seconds = ms / 1000;
-  var remainingHours = Math.floor(seconds / 3600);
-  seconds %= 3600;
-  var remainingMinutes = Math.floor(seconds / 60);
-  var remainingSeconds = Math.floor(seconds % 60);
-  return [
-    pad('00', remainingHours) + 'h ',
-    pad('00', remainingMinutes) + 'm ',
-    pad('00', remainingSeconds) + 's'
-  ].join('');
+  return numeral(ms/1000).format('00:00:00')
 }
 
 var defaultOpts = {

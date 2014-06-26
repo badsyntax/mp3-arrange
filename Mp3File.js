@@ -108,10 +108,10 @@ Mp3File.prototype.getDestFileName = function(destination) {
   return destFile;
 };
 
-Mp3File.prototype.log = function(status, msg) {
-  this.logger.log(status, msg, {
+Mp3File.prototype.log = function(status, msg, data, done) {
+  this.logger.log(status, msg, data || {
     srcFile: this.filePath,
     destFile: this.destFile,
     fileSize: this.fileSize
-  });
+  }, done);
 }
