@@ -295,8 +295,8 @@ describe('bin', function() {
           data = JSON.parse(data);
         } catch(e){};
 
-        expect(data instanceof Array).toBe(true, 'The progress data should be stored in JSON format as an array');
-        expect(data.length).toBe(4, 'The progress array should contain all files');
+        expect(typeof data).toBe('object', 'The progress data should be stored in JSON format');
+        expect(Object.keys(data).length).toBe(4, 'The progress array should contain all files');
 
         fs.removeSync(location);
 

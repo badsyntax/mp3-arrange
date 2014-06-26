@@ -213,11 +213,7 @@ function onFindFiles(err, found) {
     if (opts['save-progress'] && (file.filePath in processedFiles)) {
       progressBar.progress();
       var processed = processedFiles[file.filePath];
-      logger.log(processed.level, processed.message, {
-        srcFile: processed.srcFile,
-        destFile: processed.destFile,
-        fileSize: processed.fileSize
-      }, done);
+      logger.log(processed.level, processed.message, processed, done);
     } else {
       var action = opts.move ? 'move' : 'copy';
       file.process(action, opts.destination, function(err) {
