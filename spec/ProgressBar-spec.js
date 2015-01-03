@@ -1,7 +1,7 @@
 'use strict';
 
-var helpers = require('./helpers');
-var ProgressBar = require('../ProgressBar');
+// var helpers = require('./helpers');
+// var ProgressBar = require('../ProgressBar');
 
 var SOURCE_PATH = 'spec/fixtures/source';
 var DEST_PATH = 'spec/fixtures/dest';

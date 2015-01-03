@@ -4,7 +4,10 @@
   "description": "A collection of scripts that organise your mp3 collection",
   "private": "true",
   "scripts": {
-    "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall"
+    "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall",
+    "test-watch": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall --autotest",
+    "watch": "npm run test-watch",
+    "docker-watch": "./start-docker.sh"
   },
   "author": "Richard Willis <willis.rh@gmail.com>",
   "license": "MIT",
@@ -25,6 +28,6 @@
     "winston": "^0.7.3"
   },
   "devDependencies": {
-    "jasmine-node": "^1.14.3"
+    "jasmine-node": "^1.14.5"
   }
 }

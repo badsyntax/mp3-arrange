@@ -51,18 +51,34 @@ cd mp3-arrange
 npm link
 ```
 
+## Docker
+
+* Ensure you have the latest version of boot2docker and virtualbox installed.
+* You can only mount directories as volumes within your home folder.
+
+### Build and Run
+
+```
+docker build -t=badsyntax/mp3-arrange .
+docker run -it --rm -v `pwd`:/app badsyntax/mp3-arrange
+# Or
+docker run -it --rm -v `pwd`:/app badsyntax/mp3-arrange npm run watch
+```
+
 ### Testing
 
 Test files can be found in the `spec/` folder.
 
-Run `npm test` to run the tests.
-
-#### Generating test mp3 files
+If running tests from your host machine, you need to install sox and id3v2 first.
 
 ```bash
 # Install id3v2 and sox
 sudo apt-get install sox libsox-fmt-mp3 id3v2 -y
 ```
+
+Run `npm test` to run the tests.
+
+#### Generating test mp3 files
 
 ```bash
 # Create the mp3 file
