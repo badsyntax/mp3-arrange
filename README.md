@@ -1,8 +1,4 @@
-# mp3-tools
-
-A collection of scripts that organise your mp3 collection.
-
-## mp3-arrange
+# mp3-arrange  ![Build Status](https://api.travis-ci.org/badsyntax/mp3-arrange.svg?branch=master)
 
 A simple script to arrange your music collection. Files will be copied in the format `Genre/Artist/Album/Song/`.
 
