@@ -4,6 +4,7 @@
   "description": "A collection of scripts that organise your mp3 collection",
   "private": "true",
   "scripts": {
+    "prewatch": "npm install",
     "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall",
     "test-watch": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall --autotest",
     "watch": "npm run test-watch",

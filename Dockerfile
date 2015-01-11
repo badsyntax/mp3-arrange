@@ -9,13 +9,7 @@ RUN apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup | sudo bash -
 RUN apt-get install -y nodejs sox libsox-fmt-mp3 id3v2 lame
 
-# Bundle app source
-# ADD . /app
-
-# Install app dependencies
-# RUN cd /app && npm install
-
+RUN mkdir /app
 WORKDIR /app
-# RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 CMD ["bash"]
