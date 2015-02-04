@@ -1,4 +1,4 @@
-# mp3-arrange  ![Build Status](https://api.travis-ci.org/badsyntax/mp3-arrange.svg?branch=master)
+# mp3-arrange [![Build Status](https://travis-ci.org/badsyntax/mp3-arrange.svg?branch=master)](https://travis-ci.org/badsyntax/mp3-arrange)
 
 A simple script to arrange your music collection. Files will be copied in the format `Genre/Artist/Album/Song/`.
 
