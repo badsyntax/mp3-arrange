@@ -1,5 +1,5 @@
 node_modules
-/mp3
-/mp3_bak
-/convert
+npm-debug.log
+/mp3_src
+/mp3_dest
 /logs*
