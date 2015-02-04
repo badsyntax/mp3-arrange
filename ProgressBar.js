@@ -89,7 +89,7 @@ ProgressBar.prototype.start = function() {
 };
 
 ProgressBar.prototype.finish = function() {
-  this.output(true); // ensure the bar is full
+  this.output(true);
   clearInterval(this.interval);
   this.charm.end();
   this.emit('finish');
