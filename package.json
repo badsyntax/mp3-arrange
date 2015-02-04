@@ -19,14 +19,14 @@
   "dependencies": {
     "async": "^0.9.0",
     "bytes": "^1.0.0",
-    "charm": "^0.2.0",
-    "fs-extra": "^0.9.1",
-    "glob": "^4.0.2",
-    "lodash": "^2.4.1",
-    "musicmetadata": "^0.3.11",
-    "nomnom": "^1.7.0",
+    "charm": "^1.0.0",
+    "fs-extra": "^0.16.3",
+    "glob": "^4.3.5",
+    "lodash": "^3.1.0",
+    "musicmetadata": "^0.6.4",
+    "nomnom": "^1.8.1",
     "numeral": "^1.5.3",
-    "winston": "^0.7.3"
+    "winston": "^0.9.0"
   },
   "devDependencies": {
     "jasmine-node": "^1.14.5"
