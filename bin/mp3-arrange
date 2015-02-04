@@ -112,7 +112,7 @@ var opts = require('nomnom')
 
 function echo() {
   if (!opts.quiet) {
-    console.log.apply(console, arguments);
+    process.stdout.write(util.format.apply(util, arguments));
   }
 }
 
@@ -142,7 +142,7 @@ function readProgressFromFile() {
   return processedFiles;
 }
 
-function summary() {
+function summary(done) {
 
    var options = {
     from: startTime,
@@ -165,25 +165,20 @@ function summary() {
       return (log.level === 'success');
     });
 
-    var totalSize = 0;
-    logs.file.forEach(function(log) {
-      totalSize += log.fileSize;
-    })
+    function getTotalFileSize(prev, cur) {
+      return prev + cur.fileSize;
+    }
 
-    var errorsFileSize = 0;
-    errors.forEach(function(log) {
-      errorsFileSize += log.fileSize;
-    });
+    var sourceFileSize = logs.file.reduce(getTotalFileSize, 0);
+    var errorsFileSize = errors.reduce(getTotalFileSize, 0);
+    var successFileSize = success.reduce(getTotalFileSize, 0);
 
-    var successFileSize = 0;
-    success.forEach(function(log) {
-      successFileSize += log.fileSize;
-    });
+    echo('Copied: %d (%s)', success.length, bytes(successFileSize), '\n');
+    echo('Skipped: %d (%s)', errors.length, bytes(errorsFileSize), '\n');
+    echo('Source size: %s', bytes(sourceFileSize), '\n');
+    echo('See %s for more information.', opts.logfile, '\n');
 
-    echo('Copied: %d (%s)', success.length, bytes(successFileSize));
-    echo('Skipped: %d (%s)', errors.length, bytes(errorsFileSize));
-    echo('Source size: %s', bytes(totalSize));
-    echo('See %s for more information.', opts.logfile);
+    if (done) done();
   });
 }
 
@@ -224,18 +219,18 @@ function onFindFiles(err, found) {
     }
   }
 
+  // Handle interruptions during the copy process
+  process.on('SIGINT', function() {
+    progressBar.finish();
+    summary(process.exit);
+  });
+
   async.eachSeries(files, processFile, summary);
 }
 
 /***********
  * BEGIN
  ***********/
-
-// Handle interruptions
-process.on('SIGINT', function() {
-  summary();
-  process.exit();
-});
 
 // Parse the arguments
 opts = opts.parse();
@@ -247,8 +242,8 @@ logger.add(winston.transports.File, {
 });
 
 if (!opts.quiet) {
-  process.stdout.write('\u001B[2J\u001B[0;0f'); // clear terminal
-  process.stdout.write('Finding files...');
+  echo('\u001B[2J\u001B[0;0f'); // clear terminal
+  echo('Finding files...');
 }
 
 // Find the source files
