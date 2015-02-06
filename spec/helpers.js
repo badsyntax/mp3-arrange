@@ -31,7 +31,7 @@ helpers.run = function(cmd, args, done) {
 helpers.createMp3 = function(opts, done) {
   async.waterfall([
     function(next) {
-      run('sox', [
+      helpers.run('sox', [
         '-n', '-r', '44100',
         '-c', '2', opts.filename,
         'trim', '0.0', '0.0'
@@ -47,7 +47,7 @@ helpers.createMp3 = function(opts, done) {
       if (opts.track) args.push('-T', opts.track);
       args.push(opts.filename);
 
-      run('id3v2', args, next);
+      helpers.run('id3v2', args, next);
     }
   ], function(err, code, stdout) {
     if (err || code !== 0) done(err || stdout);
@@ -70,7 +70,7 @@ helpers.createMp3s = function(amount, done) {
     };
 
     mp3s.push(data);
-    create.push(createMp3.bind(null, data));
+    create.push(helpers.createMp3.bind(null, data));
   }
 
   async.parallel(create, function(err) {

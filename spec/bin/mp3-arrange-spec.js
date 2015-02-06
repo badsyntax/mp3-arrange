@@ -3,6 +3,7 @@
  */
 'use strict';
 
+var expect = require('chai').expect;
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
@@ -25,7 +26,7 @@ describe('bin', function() {
       async.parallel([
         function(next) {
           run('bin/mp3-arrange', [], function(err, code, stdout) {
-            expect(code).toBe(1);
+            expect(code).to.equal(1);
             next();
           });
         },
@@ -34,7 +35,7 @@ describe('bin', function() {
             '-s', 'none',
             '-d', 'none'
           ], function(err, code, stdout) {
-            expect(code).toBe(1);
+            expect(code).to.equal(1);
             next();
           });
         }
@@ -73,7 +74,7 @@ describe('bin', function() {
           'Test Album',
           song
         ));
-        expect(exists).toBe(false);
+        expect(exists).to.equal(false);
         next();
       });
     });
@@ -116,7 +117,7 @@ describe('bin', function() {
           'Test Album',
           song1
         ));
-        expect(exists1).toBe(true);
+        expect(exists1).to.equal(true);
         var exists2 = fs.existsSync(path.join(
           DEST_PATH,
           'Alternative',
@@ -124,7 +125,7 @@ describe('bin', function() {
           'Test Album 2',
           song2
         ));
-        expect(exists2).toBe(true);
+        expect(exists2).to.equal(true);
         next();
       });
     });
@@ -157,7 +158,7 @@ describe('bin', function() {
           'Test Album',
           song1
         ));
-        expect(exists1).toBe(true);
+        expect(exists1).to.equal(true);
         var exists2 = fs.existsSync(path.join(
           DEST_PATH,
           'Alternative',
@@ -165,12 +166,12 @@ describe('bin', function() {
           'Test Album 2',
           song2
         ));
-        expect(exists2).toBe(true);
+        expect(exists2).to.equal(true);
 
         var existsSrc1 = fs.existsSync(path.join(SOURCE_PATH, song1));
-        expect(existsSrc1).toBe(false);
+        expect(existsSrc1).to.equal(false);
         var existsSrc2 = fs.existsSync(path.join(SOURCE_PATH, song2));
-        expect(existsSrc2).toBe(false);
+        expect(existsSrc2).to.equal(false);
         next();
       });
     });
@@ -229,7 +230,7 @@ describe('bin', function() {
     it('Should NOT overwrite the file if the overwrite option is not set', function(next) {
       isChanged(false, function(err, changed) {
         if (err) return next(err);
-        expect(changed).toBe(false);
+        expect(changed).to.equal(false);
         next();
       });
     });
@@ -237,7 +238,7 @@ describe('bin', function() {
     it('Should overwrite the file if the overwrite option is set', function(next) {
       isChanged(true, function(err, changed) {
         if (err) return next(err);
-        expect(changed).toBe(true);
+        expect(changed).to.equal(true);
         next();
       });
     });
@@ -267,7 +268,7 @@ describe('bin', function() {
         ])
       ], function(err, code, stdout) {
         if (err) return next(err);
-        expect(String(stdout).length).toBe(0);
+        expect(String(stdout).length).to.equal(0);
         next();
       });
     });
@@ -288,15 +289,15 @@ describe('bin', function() {
         var location = path.join(DEST_PATH, 'mp3-tools.progress.json');
         var exists = fs.existsSync(location);
 
-        expect(exists).toBe(true, 'The progress log file should exist at location: ' + location);
+        expect(exists).to.equal(true, 'The progress log file should exist at location: ' + location);
 
         var data = fs.readFileSync(location);
         try {
           data = JSON.parse(data);
         } catch(e){};
 
-        expect(typeof data).toBe('object', 'The progress data should be stored in JSON format');
-        expect(Object.keys(data).length).toBe(4, 'The progress array should contain all files');
+        expect(typeof data).to.equal('object', 'The progress data should be stored in JSON format');
+        expect(Object.keys(data).length).to.equal(4, 'The progress array should contain all files');
 
         fs.removeSync(location);
 

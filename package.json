@@ -5,8 +5,8 @@
   "private": "true",
   "scripts": {
     "prewatch": "npm install",
-    "test": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall",
-    "test-watch": "jasmine-node spec/ --verbose --captureExceptions --match -spec. --matchall --autotest",
+    "test": "mocha spec --recursive",
+    "test-watch": "mocha spec --recursive --watch",
     "watch": "npm run test-watch",
     "docker-watch": "./start-docker.sh"
   },
@@ -29,6 +29,7 @@
     "winston": "^0.9.0"
   },
   "devDependencies": {
-    "jasmine-node": "^1.14.5"
+    "chai": "^1.10.0",
+    "mocha": "^2.1.0"
   }
 }

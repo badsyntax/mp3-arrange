@@ -1,5 +1,6 @@
 'use strict';
 
+var expect = require('chai').expect;
 var async = require('async');
 var path = require('path');
 var fs = require('fs-extra');
@@ -40,15 +41,15 @@ describe('Mp3File', function() {
     ], function(err) {
       if (err) return next(err);
 
-      expect(!!file.id3Data && !!file.fileSize).toBe(true, 'fileSize and id3Data properties should exist on the file instance');
-      expect(typeof file.fileSize).toBe('number', 'The fileSize should exist on the file instance', file);
-      expect(typeof file.id3Data).toBe('object', 'The id3 data should exist on the file instance', file);
+      expect(!!file.id3Data && !!file.fileSize).to.equal(true, 'fileSize and id3Data properties should exist on the file instance');
+      expect(typeof file.fileSize).to.equal('number', 'The fileSize should exist on the file instance', file);
+      expect(typeof file.id3Data).to.equal('object', 'The id3 data should exist on the file instance', file);
 
       if (file.id3Data) {
-        expect(file.id3Data.title).toBe('Test Title');
-        expect(file.id3Data.album).toBe('Test Album');
-        expect(file.id3Data.artist).toEqual(['Test Artist']);
-        expect(file.id3Data.genre).toEqual(['Alternative']);
+        expect(file.id3Data.title).to.equal('Test Title');
+        expect(file.id3Data.album).to.equal('Test Album');
+        expect(file.id3Data.artist).to.deep.equal(['Test Artist']);
+        expect(file.id3Data.genre).to.deep.equal(['Alternative']);
       }
       next();
     });
@@ -87,8 +88,8 @@ describe('Mp3File', function() {
         DEST_PATH,
         'Alternative'
       ));
-      expect(exists).toBe(true, 'Destination file does not exist: ', destPath, file);
-      expect(!!file.destFile).toBe(true);
+      expect(exists).to.equal(true, 'Destination file does not exist: ', destPath, file);
+      expect(!!file.destFile).to.equal(true);
       next();
     });
   }
@@ -126,10 +127,10 @@ describe('Mp3File', function() {
         DEST_PATH,
         'Alternative'
       ));
-      expect(existsDest).toBe(true);
-      expect(!!file.destFile).toBe(true);
+      expect(existsDest).to.equal(true);
+      expect(!!file.destFile).to.equal(true);
       var existsSrc = fs.existsSync(srcSongPath);
-      expect(existsSrc).toBe(false);
+      expect(existsSrc).to.equal(false);
       next();
     });
   }
