@@ -243,67 +243,67 @@ describe('bin', function() {
     });
   });
 
-  // describe('Quiet', function() {
+  describe('Quiet', function() {
 
-  //   var song = 'song.mp3';
-  //   var songPath = path.join(SOURCE_PATH, song);
+    var song = 'song.mp3';
+    var songPath = path.join(SOURCE_PATH, song);
 
-  //   afterEach(function() {
-  //     fs.removeSync(songPath);
-  //   });
+    afterEach(function() {
+      fs.removeSync(songPath);
+    });
 
-  //   it('Should not send any data to stdout when the quiet option is set', function(next) {
-  //     async.waterfall([
-  //       createMp3.bind(null, {
-  //         filename: songPath,
-  //         genre: 20,
-  //         artist: 'Test Artist',
-  //         album: 'Test Album'
-  //       }),
-  //       run.bind(null, 'bin/mp3-arrange', [
-  //         '-s', SOURCE_PATH,
-  //         '-d', DEST_PATH,
-  //         '-q'
-  //       ])
-  //     ], function(err, code, stdout) {
-  //       if (err) return next(err);
-  //       expect(String(stdout).length).toBe(0);
-  //       next();
-  //     });
-  //   });
-  // });
+    it('Should not send any data to stdout when the quiet option is set', function(next) {
+      async.waterfall([
+        createMp3.bind(null, {
+          filename: songPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album'
+        }),
+        run.bind(null, 'bin/mp3-arrange', [
+          '-s', SOURCE_PATH,
+          '-d', DEST_PATH,
+          '-q'
+        ])
+      ], function(err, code, stdout) {
+        if (err) return next(err);
+        expect(String(stdout).length).toBe(0);
+        next();
+      });
+    });
+  });
 
-  // describe('Save progress', function() {
-  //   it('Should save progress to a json log file in the destination directory', function(next) {
-  //      async.series([
-  //       helpers.createMp3s.bind(null, 4),
-  //       run.bind(null, 'bin/mp3-arrange', [
-  //         '-s', SOURCE_PATH,
-  //         '-d', DEST_PATH,
-  //         '-S'
-  //       ])
-  //     ], function(err, results) {
-  //       if (err) return next(err);
+  describe('Save progress', function() {
+    it('Should save progress to a json log file in the destination directory', function(next) {
+       async.series([
+        helpers.createMp3s.bind(null, 4),
+        run.bind(null, 'bin/mp3-arrange', [
+          '-s', SOURCE_PATH,
+          '-d', DEST_PATH,
+          '-S'
+        ])
+      ], function(err, results) {
+        if (err) return next(err);
 
-  //       var location = path.join(DEST_PATH, 'mp3-tools.progress.json');
-  //       var exists = fs.existsSync(location);
+        var location = path.join(DEST_PATH, 'mp3-tools.progress.json');
+        var exists = fs.existsSync(location);
 
-  //       expect(exists).toBe(true, 'The progress log file should exist at location: ' + location);
+        expect(exists).toBe(true, 'The progress log file should exist at location: ' + location);
 
-  //       var data = fs.readFileSync(location);
-  //       try {
-  //         data = JSON.parse(data);
-  //       } catch(e){};
+        var data = fs.readFileSync(location);
+        try {
+          data = JSON.parse(data);
+        } catch(e){};
 
-  //       expect(typeof data).toBe('object', 'The progress data should be stored in JSON format');
-  //       expect(Object.keys(data).length).toBe(4, 'The progress array should contain all files');
+        expect(typeof data).toBe('object', 'The progress data should be stored in JSON format');
+        expect(Object.keys(data).length).toBe(4, 'The progress array should contain all files');
 
-  //       fs.removeSync(location);
+        fs.removeSync(location);
 
-  //       var songs = results[0];
-  //       helpers.removeMp3s(songs);
-  //       next();
-  //     });
-  //   });
-  // });
+        var songs = results[0];
+        helpers.removeMp3s(songs);
+        next();
+      });
+    });
+  });
 });
