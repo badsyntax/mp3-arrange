@@ -6,6 +6,8 @@ This script only works with `.mp3` files with valid id3 metadata.
 
 ### Installation
 
+*Please note, this script has not yet been published to npm, there is still [work to be done](https://github.com/badsyntax/mp3-arrange/issues/1) before I can release an Alpha version.*
+
 `sudo npm install -g mp3-arrange`
 
 ### Usage
