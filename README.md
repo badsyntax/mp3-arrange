@@ -31,7 +31,7 @@ Options:
 
 ```bash
 # Copy files to a directory
-mp3-arrange -s /home/richard/Music -d /media/hdd1/music`
+mp3-arrange -s /home/richard/Music -d /media/hdd1/music
 ```
 
 ### Development
