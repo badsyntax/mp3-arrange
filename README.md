@@ -4,13 +4,13 @@ A simple script to arrange your music collection. Files will be copied in the fo
 
 This script only works with `.mp3` files with valid id3 metadata.
 
-### Installation
+## Installation
 
 *Please note, this script has not yet been published to npm, there is still [work to be done](https://github.com/badsyntax/mp3-arrange/issues/1) before I can release an Alpha version.*
 
 `sudo npm install -g mp3-arrange`
 
-### Usage
+## Usage
 
 ```
 Usage: mp3-arrange [options]
@@ -29,14 +29,14 @@ Options:
 
 ```
 
-#### Example usage:
+### Example usage:
 
 ```bash
 # Copy files to a directory
 mp3-arrange -s /home/richard/Music -d /media/hdd1/music
 ```
 
-### Development
+## Development
 
 Clone and install dependencies:
 
@@ -44,14 +44,14 @@ Clone and install dependencies:
 git clone https://github.com/badsyntax/mp3-arrange.git mp3-arrange && cd $_ && npm install
 ```
 
-## Docker
+### Docker
 
 If you're on OSX:
 
 * Ensure you have the latest version of boot2docker installed.
 * Ensure the project is cloned in your home folder (this is a restriction of boot2docker).
 
-### Build and Run
+#### Build and Run
 
 ```
 docker build -t=badsyntax/mp3-arrange .
@@ -73,7 +73,7 @@ sudo apt-get install sox libsox-fmt-mp3 id3v2 -y
 
 Run `npm test` to run the tests.
 
-#### Generating test mp3 files
+### Generating test mp3 files
 
 ```bash
 # Create the mp3 file
