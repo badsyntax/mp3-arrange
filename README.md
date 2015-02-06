@@ -34,23 +34,20 @@ Options:
 mp3-arrange -s /home/richard/Music -d /media/hdd1/music`
 ```
 
-#### Usage notes
-
-* Ensure you have write permissions on the destination directory.
-
 ### Development
 
-Create a global bin link:
+Clone and install dependencies:
 
-```bash
-cd mp3-arrange
-npm link
+```
+git clone https://github.com/badsyntax/mp3-arrange.git mp3-arrange && cd $_ && npm install
 ```
 
 ## Docker
 
-* Ensure you have the latest version of boot2docker and virtualbox installed.
-* You can only mount directories as volumes within your home folder.
+If you're on OSX:
+
+* Ensure you have the latest version of boot2docker installed.
+* Ensure the project is cloned in your home folder (this is a restriction of boot2docker).
 
 ### Build and Run
 
