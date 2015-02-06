@@ -10,26 +10,16 @@ var path = require('path');
 var glob = require('glob');
 var async = require('async');
 var bytes = require('bytes');
-var winston = require('winston');
 var numeral = require('numeral');
+var opts = require('nomnom');
 
 var Mp3File = require('../Mp3File');
 var ProgressBar = require('../ProgressBar');
+var logger;
 
 var startTime = new Date();
 
-var logger = logger = new (winston.Logger)({
-  levels: {
-    debug: 0,
-    verbose: 1,
-    info: 2,
-    warn: 3,
-    error: 4,
-    success: 5
-  }
-});
-
-var opts = require('nomnom')
+opts
 .option('source', {
   abbr: 's',
   metavar: 'DIR',
@@ -56,7 +46,7 @@ var opts = require('nomnom')
   abbr: 'l',
   metavar: 'FILE',
   help: 'Log file',
-  default: 'logs-mp3-arrange.txt'
+  default: 'mp3-arrange.log'
 })
 .option('dry-run', {
   abbr: 'r',
@@ -184,7 +174,7 @@ function summary(done) {
 
 function onFindFiles(err, found) {
 
-  if (!opts.quiet) process.stdout.write('done\n');
+  if (!opts.quiet) echo('done\n');
   if (err) exit(1, err);
 
   var processedFiles = readProgressFromFile();
@@ -228,23 +218,24 @@ function onFindFiles(err, found) {
   async.eachSeries(files, processFile, summary);
 }
 
+function start() {
+
+  // Parse the arguments
+  opts = opts.parse();
+
+  // Init the logger
+  logger = require('../logger')(opts.logfile);
+
+  if (!opts.quiet) {
+    echo('\u001B[2J\u001B[0;0f'); // clear terminal
+    echo('Finding files...');
+  }
+
+  // Find the source files
+  glob('**/*.mp3', { cwd: opts.source }, onFindFiles);
+}
+
 /***********
  * BEGIN
  ***********/
-
-// Parse the arguments
-opts = opts.parse();
-
-// Prep logs
-fs.removeSync(opts.logfile);
-logger.add(winston.transports.File, {
-  filename: opts.logfile,
-});
-
-if (!opts.quiet) {
-  echo('\u001B[2J\u001B[0;0f'); // clear terminal
-  echo('Finding files...');
-}
-
-// Find the source files
-glob('**/*.mp3', { cwd: opts.source }, onFindFiles);
+start();

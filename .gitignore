@@ -1,5 +1,4 @@
 node_modules
-npm-debug.log
+/*.log
 /mp3_src
 /mp3_dest
-/logs*
