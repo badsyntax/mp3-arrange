@@ -79,10 +79,16 @@ opts
   help: 'Move the files instead of copying'
 })
 .option('save-progress', {
-  abbr: 'S',
+  abbr: 'p',
   flag: true,
   default: false,
   help: 'Save (and resume) progress'
+})
+.option('dev', {
+  abbr: 'e',
+  flag: true,
+  default: false,
+  help: 'Dev mode (everything is slowed down)'
 })
 .option('quiet', {
   abbr: 'q',
@@ -116,23 +122,13 @@ function saveProgressToFile(logs) {
   logs.forEach(function(log) {
     progress[log.srcFile] = log;
   });
+  // Here we should merge the json file with the progress json instead
+  // of over-writing it.
   var location = path.join(opts.destination, 'mp3-tools.progress.json');
-  fs.writeFileSync(location, JSON.stringify(progress));
+  fs.writeFileSync(location, JSON.stringify(progress, null, 2));
 }
 
-function readProgressFromFile() {
-  var processedFiles = {};
-  var progressFile = path.join(opts.destination, 'mp3-tools.progress.json');
-  if (opts['save-progress'] && fs.existsSync(progressFile)) {
-    try {
-      processedFiles = require(path.resolve(progressFile));
-      echo('NOTE: Skipping processed files in %s', progressFile);
-    } catch(e) {};
-  }
-  return processedFiles;
-}
-
-function summary(done) {
+function showSummary(done) {
 
    var options = {
     from: startTime,
@@ -172,12 +168,7 @@ function summary(done) {
   });
 }
 
-function onFindFiles(err, found) {
-
-  if (!opts.quiet) echo('done\n');
-  if (err) exit(1, err);
-
-  var processedFiles = readProgressFromFile();
+function processFiles(found, processedFiles) {
 
   var progressBar = new ProgressBar({
     total: found.length,
@@ -195,6 +186,7 @@ function onFindFiles(err, found) {
   });
 
   function processFile(file, done) {
+    // console.log('PROCSEED FILES', processedFiles);
     if (opts['save-progress'] && (file.filePath in processedFiles)) {
       progressBar.progress();
       var processed = processedFiles[file.filePath];
@@ -212,10 +204,63 @@ function onFindFiles(err, found) {
   // Handle interruptions during the copy process
   process.on('SIGINT', function() {
     progressBar.finish();
-    summary(process.exit);
+    showSummary(process.exit);
   });
 
-  async.eachSeries(files, processFile, summary);
+  async.eachSeries(files,
+    function devMode(file, done) {
+      if (opts.dev) setTimeout(processFile.bind(null, file, done), 420);
+      else processFile(file, done)
+    },
+    showSummary
+  );
+}
+
+function getProcessedFiles(progressFile, done) {
+
+  var processedFiles = {};
+  var promptMsg = echo.bind(null,
+    'Do you want to want to continue your progress? [Y/n] ');
+
+  echo('\nNOTE: Found progress file at: %s', progressFile, '\n');
+  promptMsg();
+  process.stdin.resume();
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', function (text) {
+    text = String(text).trim().toLowerCase();
+    if (!text || text === 'y') {
+      try {
+        processedFiles = require(path.resolve(progressFile));
+        echo('Skipping processed files', '\n');
+      } catch(e) {};
+    } else if (text !== 'n') {
+      echo('Invalid option!\n')
+      promptMsg();
+      return;
+    }
+    process.stdin.pause();
+    done(processedFiles);
+  });
+}
+
+function readProgressFromFile(allFiles, done) {
+  var progressFile = path.join(opts.destination, 'mp3-tools.progress.json');
+  if (opts['save-progress'] && fs.existsSync(progressFile)) {
+    getProcessedFiles(progressFile, function(processedFiles) {
+      done(null, allFiles, processedFiles);
+    });
+  } else {
+    done(null, allFiles, {})
+  }
+}
+
+function onFindFiles(err, found) {
+  if (err) exit(1, err);
+  if (!opts.quiet) echo('done\n');
+  async.waterfall([
+    readProgressFromFile.bind(null, found),
+    processFiles
+  ]);
 }
 
 function start() {

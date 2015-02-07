@@ -281,7 +281,7 @@ describe('bin', function() {
         run.bind(null, 'bin/mp3-arrange', [
           '-s', SOURCE_PATH,
           '-d', DEST_PATH,
-          '-S'
+          '-p'
         ])
       ], function(err, results) {
         if (err) return next(err);
