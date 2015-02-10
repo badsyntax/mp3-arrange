@@ -1,14 +1,14 @@
 {
   "name": "mp3-tools",
   "version": "0.0.1",
-  "description": "A collection of scripts that organise your mp3 collection",
+  "description": "A script to arrange your mp3 collection",
   "private": "true",
   "scripts": {
     "prewatch": "npm install",
+    "pretest": "npm install",
     "test": "mocha spec --recursive",
     "test-watch": "mocha spec --recursive --watch",
-    "watch": "npm run test-watch",
-    "docker-watch": "./start-docker.sh"
+    "watch": "npm run test-watch"
   },
   "author": "Richard Willis <willis.rh@gmail.com>",
   "license": "MIT",
