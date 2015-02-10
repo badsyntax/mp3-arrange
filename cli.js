@@ -164,16 +164,16 @@ function showSummary(done) {
   });
 }
 
-function processFiles(found, processedFiles) {
+function processFiles(filesOnDisk, processedFiles) {
 
   var progressBar = new ProgressBar({
-    total: found.length,
+    total: filesOnDisk.length,
     size: 30,
     frequency: 100,
     quiet: opts.quiet
   });
 
-  var files = found.map(function(file) {
+  var files = filesOnDisk.map(function(file) {
     return new Mp3File(
       path.join(opts.source, file),
       opts,
@@ -205,56 +205,67 @@ function processFiles(found, processedFiles) {
 
   async.eachSeries(files,
     function devMode(file, done) {
-      if (opts.dev) setTimeout(processFile.bind(null, file, done), 420);
-      else processFile(file, done)
+      if (opts.dev)
+        setTimeout(processFile.bind(null, file, done), 420);
+      else
+        processFile(file, done)
     },
     showSummary
   );
 }
 
-function getProcessedFiles(progressFile, done) {
+function promptContinueProgress(progressFile, done) {
 
-  var processedFiles = {};
+  var _processedFiles;
+  var processedFiles;
+
+  try {
+    _processedFiles = require(path.resolve(progressFile));
+  } catch(e) {
+    return done({});
+  };
+
   var promptMsg = echo.bind(null,
     'Do you want to want to continue your progress? [Y/n] ');
 
-  echo('\nNOTE: Found progress file at: %s', progressFile, '\n');
+  echo('NOTE: Found progress file at: %s', progressFile, '\n');
+  echo('%d files have been processed.', Object.keys(_processedFiles).length, '\n');
   promptMsg();
+
   process.stdin.resume();
   process.stdin.setEncoding('utf8');
+
   process.stdin.on('data', function (text) {
     text = String(text).trim().toLowerCase();
     if (!text || text === 'y') {
-      try {
-        processedFiles = require(path.resolve(progressFile));
-        echo('Skipping processed files', '\n');
-      } catch(e) {};
+      processedFiles = _processedFiles;
+      echo('Skipping processed files...', '\n');
     } else if (text !== 'n') {
       echo('Invalid option!\n')
       promptMsg();
       return;
     }
     process.stdin.pause();
-    done(processedFiles);
+    done(processedFiles || {});
   });
 }
 
-function readProgressFromFile(allFiles, done) {
+function readProgressFromFile(filesOnDisk, done) {
   var progressFile = path.join(opts.destination, 'mp3-tools.progress.json');
   if (opts['save-progress'] && fs.existsSync(progressFile)) {
-    getProcessedFiles(progressFile, function(processedFiles) {
-      done(null, allFiles, processedFiles);
+    promptContinueProgress(progressFile, function(processedFiles) {
+      done(null, filesOnDisk, processedFiles);
     });
   } else {
-    done(null, allFiles, {})
+    done(null, filesOnDisk, {})
   }
 }
 
-function onFindFiles(err, found) {
+function onFindFiles(err, filesOnDisk) {
   if (err) exit(1, err);
   if (!opts.quiet) echo('done\n');
   async.waterfall([
-    readProgressFromFile.bind(null, found),
+    readProgressFromFile.bind(null, filesOnDisk),
     processFiles
   ]);
 }
