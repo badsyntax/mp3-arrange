@@ -33,7 +33,8 @@ Options:
 ### Example usage:
 
 I suggest to first start with a small set of files to understand how they will be processed
-before attempting to arrange your entire collection!
+before attempting to arrange your entire collection. I also suggest doing a dry run
+with option `-r` to view a summary of the changes to be made.
 
 
 ```bash
