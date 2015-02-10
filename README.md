@@ -1,6 +1,6 @@
 # mp3-arrange [![Build Status](https://travis-ci.org/badsyntax/mp3-arrange.svg?branch=master)](https://travis-ci.org/badsyntax/mp3-arrange)
 
-A simple script to arrange your music collection. Files will be copied in the format `Genre/Artist/Album/Song/`.
+A simple script to arrange your music collection. Mp3 files will be copied in the format `Genre/Artist/Album/01 Track Title.mp3`.
 
 This script only works with `.mp3` files with valid id3 metadata.
 
@@ -18,23 +18,36 @@ Usage: mp3-arrange [options]
 Options:
    -s DIR, --source DIR        Source directory
    -d DIR, --destination DIR   Destination directory
-   -l FILE, --logfile FILE     Log file  [logs.json]
+   -l FILE, --logfile FILE     Log file  [mp3-arrange.log]
    -r, --dry-run               Do a dry run, no changes will be made, and no logs files will be generated  [false]
    -u, --skip-unknowns         Skip processing the file if no id3 data can be read  [true]
    -f, --format-filenames      Re-name the files to match the song name  [true]
    -o, --overwrite             Overwrite the destination file if it exists  [false]
-   -m, --move                  Move the files, instead of copying  [false]
+   -m, --move                  Move the files instead of copying  [false]
+   -p, --save-progress         Save (and resume) progress  [false]
+   -e, --dev                   Dev mode (everything is slowed down)  [false]
    -q, --quiet                 Only output errors  [false]
    -v, --version               Print version and exit  [false]
-
 ```
 
 ### Example usage:
+
+I suggest to first start with a small set of files to understand how they will be processed
+before attempting to arrange your entire collection!
+
 
 ```bash
 # Copy files to a directory
 mp3-arrange -s /home/richard/Music -d /media/hdd1/music
 ```
+
+## Options
+
+### Saving progress
+
+Use the `-p` option to save progress. This allows you to stop and continue the processing
+without re-processing already processed files. This can save you some time when dealing with
+many files.
 
 ## Development
 
