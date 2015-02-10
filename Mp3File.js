@@ -58,11 +58,11 @@ Mp3File.prototype.readMetadata = function(done) {
 
 
 Mp3File.prototype.copy = function(destFile, done) {
+  if (this.opts['dry-run'])
+    return done(null, destFile);
   fs.exists(destFile, function (exists) {
     if (exists && !this.opts.overwrite)
       return done('File already exists', destFile);
-    if (this.opts['dry-run'])
-      return done(null, destFile);
     fs.copy(this.filePath, destFile, function onCopy(err) {
       done(err, destFile);
     });
@@ -70,11 +70,11 @@ Mp3File.prototype.copy = function(destFile, done) {
 };
 
 Mp3File.prototype.move = function(destFile, done) {
+  if (this.opts['dry-run'])
+    return done(null, destFile);
   fs.exists(destFile, function (exists) {
     if (exists && !this.opts.overwrite)
       fs.remove(this.filePath, done);
-    if (this.opts['dry-run'])
-      return done(null, destFile);
     fs.move(this.filePath, destFile, function onCopy(err) {
       done(err, destFile);
     });
@@ -103,9 +103,7 @@ Mp3File.prototype.getDestFileName = function(destination) {
   }
 
   // Full path to file
-  var destFile = path.join(destDir, destTrackName);
-
-  return destFile;
+  return path.join(destDir, destTrackName);
 };
 
 Mp3File.prototype.log = function(status, msg, data, done) {
