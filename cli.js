@@ -50,12 +50,6 @@ opts
   default: false,
   help: 'Do a dry run, no changes will be made, and no logs files will be generated'
 })
-.option('skip-unknowns', {
-  abbr: 'u',
-  flag: true,
-  default: true,
-  help: 'Skip processing the file if no id3 data can be read'
-})
 .option('format-filenames', {
   abbr: 'f',
   flag: true,
