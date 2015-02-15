@@ -80,6 +80,59 @@ describe('bin', function() {
     });
   });
 
+  describe('Log file location', function() {
+
+    var song = 'song.mp3';
+    var songPath = path.join(SOURCE_PATH, song);
+
+    afterEach(function() {
+      fs.removeSync(songPath);
+    });
+
+    function checkLogFile(filename, done) {
+
+      var opts = [
+        '-s', SOURCE_PATH,
+        '-d', DEST_PATH,
+      ];
+
+      if (filename) {
+        opts.push('--logfile');
+        opts.push(filename);
+      }
+
+      async.waterfall([
+        createMp3.bind(null, {
+          filename: songPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album'
+        }),
+        run.bind(null, 'bin/mp3-arrange', opts)
+      ], done);
+    }
+
+    it('Should write logs to the default file', function(next) {
+      var filename = 'mp3-arrange.log';
+      checkLogFile(filename, function(err) {
+        if (err) return next(err);
+        var exists = fs.existsSync(filename);
+        expect(exists).to.equal(true);
+        next();
+      });
+    });
+
+    it('Should write logs to a specified log file', function(next) {
+      var filename = '/tmp/mp3logfile.log';
+      checkLogFile(filename, function(err) {
+        if (err) return next(err);
+        var exists = fs.existsSync(filename);
+        expect(exists).to.equal(true);
+        next();
+      });
+    });
+  });
+
   describe('Copy and move', function() {
 
     var song1 = 'song1.mp3';
@@ -172,6 +225,73 @@ describe('bin', function() {
         expect(existsSrc1).to.equal(false);
         var existsSrc2 = fs.existsSync(path.join(SOURCE_PATH, song2));
         expect(existsSrc2).to.equal(false);
+        next();
+      });
+    });
+  });
+
+  describe('Format filenames', function() {
+
+    var song = 'song.mp3';
+    var songPath = path.join(SOURCE_PATH, song);
+
+    afterEach(function() {
+      fs.removeSync(songPath);
+    });
+
+    it('Should rename the filename to be in format of "01 Track Title.mp3"', function(next) {
+      async.waterfall([
+        createMp3.bind(null, {
+          filename: songPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album',
+          title:' Track Title',
+          track: 2
+        }),
+        run.bind(null, 'bin/mp3-arrange', [
+          '-s', SOURCE_PATH,
+          '-d', DEST_PATH,
+          '--format-filenames'
+        ])
+      ], function(err) {
+        if (err) return next(err);
+        var exists = fs.existsSync(path.join(
+          DEST_PATH,
+          'Alternative',
+          'Test Artist',
+          'Test Album',
+          '02 Track Title.mp3'
+        ));
+        expect(exists).to.equal(true);
+        next();
+      });
+    });
+
+    it('Should rename the filename to be in format of "Track Title.mp3" if no track information is found', function(next) {
+      async.waterfall([
+        createMp3.bind(null, {
+          filename: songPath,
+          genre: 20,
+          artist: 'Test Artist',
+          album: 'Test Album',
+          title:' Track Title'
+        }),
+        run.bind(null, 'bin/mp3-arrange', [
+          '-s', SOURCE_PATH,
+          '-d', DEST_PATH,
+          '--format-filenames'
+        ])
+      ], function(err) {
+        if (err) return next(err);
+        var exists = fs.existsSync(path.join(
+          DEST_PATH,
+          'Alternative',
+          'Test Artist',
+          'Test Album',
+          'Track Title.mp3'
+        ));
+        expect(exists).to.equal(true);
         next();
       });
     });
