@@ -99,7 +99,7 @@ Mp3File.prototype.getDestFileName = function(destination) {
     var trackNo = hasTrackData ? (pad('00', parseInt(this.id3Data.track.no)) + ' ') : '';
 
     // Add track & title, eg: 04 My Track.mp3
-    destTrackName = util.format('%s%s.mp3', trackNo, this.id3Data.title);
+    destTrackName = util.format('%s%s.mp3', trackNo, this.id3Data.title.trim());
   }
 
   // Full path to file
