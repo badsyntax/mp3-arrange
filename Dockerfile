@@ -1,5 +1,5 @@
 FROM ubuntu:14.04
-MAINTAINER Richard Willis <richard@fathomlondon.com>
+MAINTAINER Richard Willis <willis.rh@gmail.com>
 
 ENV DEBIAN_FRONTEND noninteractive
 
