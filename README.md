@@ -20,7 +20,6 @@ Options:
    -d DIR, --destination DIR   Destination directory
    -l FILE, --logfile FILE     Log file  [mp3-arrange.log]
    -r, --dry-run               Do a dry run, no changes will be made, and no logs files will be generated  [false]
-   -u, --skip-unknowns         Skip processing the file if no id3 data can be read  [true]
    -f, --format-filenames      Re-name the files to match the song name  [true]
    -o, --overwrite             Overwrite the destination file if it exists  [false]
    -m, --move                  Move the files instead of copying  [false]
@@ -89,3 +88,7 @@ Run `npm test` to run the tests.
 sox -n -r 44100 -c 2 song.mp3 trim 0.0 0.0
 id3v2 -g 20 -a "Test Artist" -A "Test Album" -t "Test Song" song.mp3
 ```
+
+### License
+
+MIT
