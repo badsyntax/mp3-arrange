@@ -2,3 +2,4 @@ node_modules
 /*.log
 /mp3_src
 /mp3_dest
+.DS_Store
