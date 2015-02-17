@@ -55,103 +55,119 @@ describe('Mp3File', function() {
     });
   });
 
-  function copy(opts, destSong, next) {
-    async.waterfall([
-      function(next) {
-        createMp3({
-          filename: srcSongPath,
-          genre: 20,
-          artist: 'Test Artist',
-          album: 'Test Album',
-          title: 'Test Title',
-          track: 1
-        }, next);
-      },
-      function(next) {
-        file = new Mp3File(srcSongPath, opts);
-        file.read(next);
-      },
-      function(next) {
-        file.process('copy', DEST_PATH, next);
-      }
-    ], function(err) {
-      if (err) return next(err);
-      var destPath = path.join(
-        DEST_PATH,
-        'Alternative',
-        'Test Artist',
-        'Test Album',
-        destSong
-      );
-      var exists = fs.existsSync(destPath);
-      fs.removeSync(path.join(
-        DEST_PATH,
-        'Alternative'
-      ));
-      expect(exists).to.equal(true, 'Destination file does not exist: ', destPath, file);
-      expect(!!file.destFile).to.equal(true);
-      next();
-    });
-  }
-
-  function move(opts, destSong, next) {
-    async.waterfall([
-      function(next) {
-        createMp3({
-          filename: srcSongPath,
-          genre: 20,
-          artist: 'Test Artist',
-          album: 'Test Album',
-          title: 'Test Title',
-          track: 1
-        }, next);
-      },
-      function(next) {
-        file = new Mp3File(srcSongPath, opts);
-        file.read(next);
-      },
-      function(next) {
-        file.process('move', DEST_PATH, next);
-      }
-    ], function(err) {
-      if (err) return next(err);
-      var destPath = path.join(
-        DEST_PATH,
-        'Alternative',
-        'Test Artist',
-        'Test Album',
-        destSong
-      );
-      var existsDest = fs.existsSync(destPath);
-      fs.removeSync(path.join(
-        DEST_PATH,
-        'Alternative'
-      ));
-      expect(existsDest).to.equal(true);
-      expect(!!file.destFile).to.equal(true);
-      var existsSrc = fs.existsSync(srcSongPath);
-      expect(existsSrc).to.equal(false);
-      next();
-    });
-  }
-
-  it('Should copy the file to the destination directory', function(next) {
-    copy({}, song, next);
-  });
-
-  it('Should copy the file to the destination directory with formatted file names', function(next) {
-    copy({
+  it('Should escape and format filename paths', function() {
+    var mp3File = new Mp3File(null, {
       'format-filenames': true
-    }, '01 Test Title.mp3', next)
+    });
+    mp3File.id3Data = {
+      title: '      Test Title',
+      artist: [ 'Test  Artist      ' ],
+      genre: [ 'Reggae/Dub' ]
+    };
+    var filename = mp3File.getDestFileName('.');
+    expect(filename).to.equal('Reggae-Dub/Test  Artist/Uknown Abum/Test Title.mp3');
   });
 
-  it('Should move the file to the destination directory', function(next) {
-    move({}, song, next);
-  });
+  describe('Copy and move', function() {
 
-  it('Should move the file to the destination directory with formatted file names', function(next) {
-    move({
-      'format-filenames': true
-    }, '01 Test Title.mp3', next)
+    function copy(opts, destSong, next) {
+      async.waterfall([
+        function(next) {
+          createMp3({
+            filename: srcSongPath,
+            genre: 20,
+            artist: 'Test Artist',
+            album: 'Test Album',
+            title: 'Test Title',
+            track: 1
+          }, next);
+        },
+        function(next) {
+          file = new Mp3File(srcSongPath, opts);
+          file.read(next);
+        },
+        function(next) {
+          file.process('copy', DEST_PATH, next);
+        }
+      ], function(err) {
+        if (err) return next(err);
+        var destPath = path.join(
+          DEST_PATH,
+          'Alternative',
+          'Test Artist',
+          'Test Album',
+          destSong
+        );
+        var exists = fs.existsSync(destPath);
+        fs.removeSync(path.join(
+          DEST_PATH,
+          'Alternative'
+        ));
+        expect(exists).to.equal(true, 'Destination file does not exist: ', destPath, file);
+        expect(!!file.destFile).to.equal(true);
+        next();
+      });
+    }
+
+    function move(opts, destSong, next) {
+      async.waterfall([
+        function(next) {
+          createMp3({
+            filename: srcSongPath,
+            genre: 20,
+            artist: 'Test Artist',
+            album: 'Test Album',
+            title: 'Test Title',
+            track: 1
+          }, next);
+        },
+        function(next) {
+          file = new Mp3File(srcSongPath, opts);
+          file.read(next);
+        },
+        function(next) {
+          file.process('move', DEST_PATH, next);
+        }
+      ], function(err) {
+        if (err) return next(err);
+        var destPath = path.join(
+          DEST_PATH,
+          'Alternative',
+          'Test Artist',
+          'Test Album',
+          destSong
+        );
+        var existsDest = fs.existsSync(destPath);
+        fs.removeSync(path.join(
+          DEST_PATH,
+          'Alternative'
+        ));
+        expect(existsDest).to.equal(true);
+        expect(!!file.destFile).to.equal(true);
+        var existsSrc = fs.existsSync(srcSongPath);
+        expect(existsSrc).to.equal(false);
+        next();
+      });
+    }
+
+    it('Should copy the file to the destination directory', function(next) {
+      copy({}, song, next);
+    });
+
+    it('Should copy the file to the destination directory with formatted file names', function(next) {
+      copy({
+        'format-filenames': true
+      }, '01 Test Title.mp3', next)
+    });
+
+    it('Should move the file to the destination directory', function(next) {
+      move({}, song, next);
+    });
+
+    it('Should move the file to the destination directory with formatted file names', function(next) {
+      move({
+        'format-filenames': true
+      }, '01 Test Title.mp3', next)
+    });
   });
 });
