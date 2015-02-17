@@ -112,8 +112,6 @@ function saveProgressToFile(logs) {
   logs.forEach(function(log) {
     progress[log.srcFile] = log;
   });
-  // Here we should merge the json file with the progress json instead
-  // of over-writing it.
   var location = path.join(opts.destination, 'mp3-tools.progress.json');
   fs.writeFileSync(location, JSON.stringify(progress, null, 2));
 }
@@ -176,7 +174,6 @@ function processFiles(filesOnDisk, processedFiles) {
   });
 
   function processFile(file, done) {
-    // console.log('PROCSEED FILES', processedFiles);
     if (opts['save-progress'] && (file.filePath in processedFiles)) {
       progressBar.progress();
       var processed = processedFiles[file.filePath];
@@ -265,23 +262,12 @@ function onFindFiles(err, filesOnDisk) {
 }
 
 function start() {
-
-  // Parse the arguments
   opts = opts.parse();
-
-  // Init the logger
   logger = require('./logger')(opts.logfile);
-
   if (!opts.quiet) {
     echo('\u001B[2J\u001B[0;0f'); // clear terminal
     echo('Finding files...');
   }
-
-  // Find the source files
   glob('**/*.mp3', { cwd: opts.source }, onFindFiles);
 }
-
-/***********
- * BEGIN
- ***********/
 start();
