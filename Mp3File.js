@@ -83,13 +83,13 @@ Mp3File.prototype.move = function(destFile, done) {
 
 Mp3File.prototype.getDestFileName = function(destination) {
 
-  var genre   = this.id3Data.genre[0] || 'Unknown Genre';
-  var artist  = this.id3Data.artist[0] || 'Unknown Artist';
-  var album   = this.id3Data.album || 'Uknown Abum';
+  var genre   = this.safeFilename(this.id3Data.genre[0] || 'Unknown Genre');
+  var artist  = this.safeFilename(this.id3Data.artist[0] || 'Unknown Artist');
+  var album   = this.safeFilename(this.id3Data.album || 'Uknown Abum');
   var destDir = path.join(destination, genre, artist, album);
 
   // Default track name
-  var destTrackName = path.basename(this.filePath);
+  var destTrackName = this.safeFilename(path.basename(this.filePath || 'Unknown Title'));
 
   // If we're formatting filename, we need at least the track title
   if (this.opts['format-filenames'] && this.id3Data.title) {
@@ -99,11 +99,17 @@ Mp3File.prototype.getDestFileName = function(destination) {
     var trackNo = hasTrackData ? (pad('00', parseInt(this.id3Data.track.no)) + ' ') : '';
 
     // Add track & title, eg: 04 My Track.mp3
-    destTrackName = util.format('%s%s.mp3', trackNo, this.id3Data.title.trim());
+    destTrackName = this.safeFilename(
+      util.format('%s%s.mp3', trackNo, this.id3Data.title.trim())
+    );
   }
 
   // Full path to file
   return path.join(destDir, destTrackName);
+};
+
+Mp3File.prototype.safeFilename = function(filename) {
+  return filename.trim().replace(/\//g, '-');
 };
 
 Mp3File.prototype.log = function(status, msg, data, done) {
