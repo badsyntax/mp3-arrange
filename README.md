@@ -1,4 +1,4 @@
-# mp3-arrange [![Build Status](https://travis-ci.org/badsyntax/mp3-arrange.svg?branch=master)](https://travis-ci.org/badsyntax/mp3-arrange?branch=master) [![Coverage Status](https://coveralls.io/repos/badsyntax/mp3-arrange/badge.svg?branch=master)](https://coveralls.io/r/badsyntax/mp3-arrange?branch=master)
+# mp3-arrange [![Build Status](https://travis-ci.org/badsyntax/mp3-arrange.svg?branch=master)](https://travis-ci.org/badsyntax/mp3-arrange) [![Coverage Status](https://coveralls.io/repos/badsyntax/mp3-arrange/badge.svg?branch=master)](https://coveralls.io/r/badsyntax/mp3-arrange?branch=master)
 
 
 A simple script to arrange your music collection. Mp3 files will be copied in the format `Genre/Artist/Album/01 Track Title.mp3`.
