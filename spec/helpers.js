@@ -83,4 +83,4 @@ helpers.removeMp3s = function(mp3s) {
   mp3s.forEach(function(mp3) {
     fs.removeSync(mp3.filename);
   });
-}
+};

@@ -414,7 +414,7 @@ describe('bin', function() {
         var data = fs.readFileSync(location);
         try {
           data = JSON.parse(data);
-        } catch(e){};
+        } catch(e){}
 
         expect(typeof data).to.equal('object', 'The progress data should be stored in JSON format');
         expect(Object.keys(data).length).to.equal(4, 'The progress array should contain all files');

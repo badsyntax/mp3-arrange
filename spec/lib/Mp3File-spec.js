@@ -4,8 +4,8 @@ var expect = require('chai').expect;
 var async = require('async');
 var path = require('path');
 var fs = require('fs-extra');
-var helpers = require('./helpers');
-var Mp3File = require('../lib/Mp3File');
+var helpers = require('../helpers');
+var Mp3File = require('../../lib/Mp3File');
 
 var SOURCE_PATH = 'spec/fixtures/source';
 var DEST_PATH = 'spec/fixtures/dest';
@@ -157,7 +157,7 @@ describe('Mp3File', function() {
     it('Should copy the file to the destination directory with formatted file names', function(next) {
       copy({
         'format-filenames': true
-      }, '01 Test Title.mp3', next)
+      }, '01 Test Title.mp3', next);
     });
 
     it('Should move the file to the destination directory', function(next) {
@@ -167,7 +167,7 @@ describe('Mp3File', function() {
     it('Should move the file to the destination directory with formatted file names', function(next) {
       move({
         'format-filenames': true
-      }, '01 Test Title.mp3', next)
+      }, '01 Test Title.mp3', next);
     });
   });
 });

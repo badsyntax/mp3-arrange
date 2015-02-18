@@ -12,7 +12,6 @@
   "eqnull": true,
   "node": true,
   "globals": {
-    "expect": false,
     "runs": false,
     "waitsFor": false,
     "it": false,

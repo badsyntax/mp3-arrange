@@ -4,10 +4,11 @@
   "description": "A script to arrange your mp3 collection",
   "private": "true",
   "scripts": {
-    "prewatch": "npm install",
-    "pretest": "npm install",
+    "prewatch": "npm install && npm run lint",
+    "pretest": "npm install && npm run lint",
     "pretest-coverage": "npm run gen-coverage",
     "precoveralls": "npm run test-coverage",
+    "lint": "jshint --config .jshintrc .",
     "test-with-coverage": "npm run test-coverage",
     "test": "mocha spec --recursive --ui bdd -t 5000",
     "test-watch": "mocha spec --recursive --ui bdd -t 5000 --watch",
@@ -38,6 +39,7 @@
     "chai": "^1.10.0",
     "coveralls": "^2.11.2",
     "istanbul": "^0.3.5",
+    "jshint": "^2.6.0",
     "mocha": "^2.1.0"
   }
 }
