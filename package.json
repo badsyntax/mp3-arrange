@@ -6,11 +6,15 @@
   "scripts": {
     "prewatch": "npm install",
     "pretest": "npm install",
-    "test": "npm run test-coverage && npm run check-coverage",
+    "pretest-coverage": "npm run gen-coverage",
+    "precoveralls": "npm run gen-coverage",
+    "test-with-coverage": "npm run test-coverage",
+    "test": "mocha spec --recursive --ui bdd -t 5000",
     "test-watch": "mocha spec --recursive --ui bdd -t 5000 --watch",
     "watch": "npm run test-watch",
-    "test-coverage": "istanbul cover ./node_modules/.bin/_mocha -- spec --recursive --ui bdd -t 5000",
-    "check-coverage": "istanbul check-coverage coverage/coverage.json --statements 90 --branches 50 --lines 90 --functions 90"
+    "gen-coverage": "istanbul cover ./node_modules/.bin/_mocha -- spec --recursive --ui bdd -t 5000",
+    "test-coverage": "istanbul check-coverage coverage/coverage.json --statements 90 --branches 50 --lines 90 --functions 90",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "author": "Richard Willis <willis.rh@gmail.com>",
   "license": "MIT",
@@ -32,6 +36,7 @@
   },
   "devDependencies": {
     "chai": "^1.10.0",
+    "coveralls": "^2.11.2",
     "istanbul": "^0.3.5",
     "mocha": "^2.1.0"
   }
